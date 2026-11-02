@@ -272,7 +272,7 @@ export const MIGRATIONS = [
     {
         name: "0003_migration_meta_key_width",
         statements: [
-            `ALTER TABLE migration_meta MODIFY mkey VARCHAR(64) PRIMARY KEY`
+            `ALTER TABLE migration_meta MODIFY mkey VARCHAR(64) NOT NULL`
         ]
     }
 ];

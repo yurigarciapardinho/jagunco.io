@@ -1,0 +1,228 @@
+/* ============================================================================
+   JAGUNCO.IO - brand skin for the official client (sertao / cangaco identity)
+   ----------------------------------------------------------------------------
+   Colors come from art/source/palette.json (single source of truth; the sprite
+   pipeline tools/generate_jagunco_assets.py and the renderer patch
+   tools/jagunco-renderer-patch.mjs read the same file).
+
+   INTEGRATION: this file must be appended AFTER main.css in the official build
+   (same mechanism as client-official/page-parts.css in
+   tools/build-official-client.mjs). It only overrides presentation: colors,
+   backgrounds, borders and shadows. No layout, sizing, display, pointer-events
+   or z-index rules are changed, so every menu, HUD element and mobile/touch
+   control keeps working and stays visible.
+   ============================================================================ */
+
+:root {
+    --jg-outline: #2b1a10;        /* dark umber outline (matches sprite outlines) */
+    --jg-leather: #6b4a2a;
+    --jg-leather-dark: #4a3120;
+    --jg-straw: #d9a441;          /* straw gold (ouro de palha) */
+    --jg-straw-light: #f2cd6e;
+    --jg-rust: #b8402e;           /* cangaceiro bandana red */
+    --jg-rust-dark: #96331f;
+    --jg-caatinga: #5d7a3a;       /* caatinga green */
+    --jg-caatinga-dark: #43592a;
+    --jg-teal: #3e8a8a;           /* sertao river teal */
+    --jg-sand: #e8d8b0;
+    --jg-parchment: #f4ead2;
+    --jg-stone: #8a8578;
+    --jg-hud-bg: rgba(43, 26, 16, .48);   /* warm translucent HUD backing */
+    --jg-hud-bg-hover: rgba(74, 49, 32, .55);
+    --jg-card-shadow: #b09a6a;    /* leather-tone card drop shadow */
+}
+
+/* ---------------------------------------------------------------- page base */
+html, body { background-color: #1d130c; }
+a { color: var(--jg-rust); }
+a:hover, a:active { color: var(--jg-rust-dark); }
+#loadingText { color: var(--jg-parchment); }
+#errorNotification > div { color: var(--jg-parchment); }
+
+/* ---------------------------------------------------------------- game name */
+/* same layered-shadow trick as main.css, re-tinted to straw on leather */
+#gameName {
+    color: var(--jg-straw-light);
+    text-shadow:
+        0 1px 0 var(--jg-leather-dark), 0 2px 0 var(--jg-leather-dark),
+        0 3px 0 var(--jg-leather-dark), 0 4px 0 var(--jg-leather-dark),
+        0 5px 0 var(--jg-leather-dark), 0 6px 0 var(--jg-leather-dark),
+        0 7px 0 var(--jg-leather-dark), 0 8px 0 var(--jg-leather-dark),
+        0 9px 0 var(--jg-leather-dark), 0 10px 18px rgba(0,0,0,.45);
+}
+
+/* ---------------------------------------------------------------- main menu */
+#mainMenu { background-color: rgba(29, 19, 12, .72); }
+
+.menuCard, .adMenuCard {
+    background-color: var(--jg-parchment);
+    -webkit-box-shadow: 0 7px var(--jg-card-shadow);
+    -moz-box-shadow: 0 7px var(--jg-card-shadow);
+    box-shadow: 0 7px var(--jg-card-shadow);
+}
+.adMenuCard { -webkit-box-shadow: none; -moz-box-shadow: none; box-shadow: none; }
+.menuHeader { color: var(--jg-outline); }
+.menuText { color: #7a6a52; }
+.settingRadio { color: #6f6046; }
+.keybindNote, .keybindTitle { color: #7a6a52; }
+#settingsLinks a { color: #5a4632; border-top-color: #ddd0ae; }
+#settingsLinks a:last-child { border-bottom-color: #ddd0ae; }
+#settingsLinks a:hover { color: var(--jg-outline); }
+#settingsLinks a .material-icons { color: #a99a76; }
+.adminTitle { color: #7a6a52; border-bottom-color: #ddd0ae; }
+
+#nameInput, .profileSocialInput, #serverBrowser input {
+    background-color: var(--jg-sand);
+    color: #3a281a;
+}
+#nameInput::placeholder, .profileSocialInput::placeholder { color: #a99a76; }
+::-webkit-input-placeholder { color: #a99a76; }
+:-moz-placeholder { color: #a99a76; }
+::-moz-placeholder { color: #a99a76; }
+:-ms-input-placeholder { color: #a99a76; }
+
+/* primary buttons: cangaceiro rust red */
+.menuButton {
+    background-color: var(--jg-rust);
+    color: #fff;
+    -webkit-box-shadow: 0 4px var(--jg-rust-dark);
+    -moz-box-shadow: 0 4px var(--jg-rust-dark);
+    box-shadow: 0 4px var(--jg-rust-dark);
+}
+.menuButton:hover { background-color: #c94c33; }
+.menuButton:active {
+    -webkit-transform: translateY(4px);
+    transform: translateY(4px);
+    -webkit-box-shadow: 0 0 var(--jg-rust-dark);
+    box-shadow: 0 0 var(--jg-rust-dark);
+}
+.menuButton.disabled { color: #d8c9a8; background-color: #6f6046; }
+.keybindBtn { background-color: var(--jg-rust); }
+.keybindBtn:hover, .keybindBtn.capturing { background-color: #c94c33; }
+
+/* secondary / confirm buttons */
+#confirmButtons #confirmNo, .adminBtn { background-color: var(--jg-stone); }
+#confirmButtons #confirmYes, .staffAction.armed { background-color: var(--jg-rust); }
+.adminBtn.go, .adminBtn:hover { background-color: var(--jg-caatinga); }
+.adminBtn.go:hover { background-color: var(--jg-caatinga-dark); }
+
+/* skin swatches keep their gameplay colors; only the ring is branded */
+.skinColorItem { border-color: var(--jg-leather-dark); }
+
+/* segmented tabs (settings, leaderboard kinds) */
+.segTabs a, #gameMenuTabs a { color: #5a4632; }
+.segTabs a:hover, #gameMenuTabs a:hover { background-color: #e4d6b2; }
+.segTabs a.active, #gameMenuTabs a.active { background-color: var(--jg-caatinga); color: #fff; }
+
+/* settings popup / whisper card overlay tint + shadow */
+#settingsPopup, #whisperCard {
+    box-shadow: 0 7px var(--jg-card-shadow), 0 0 0 100vmax rgba(29, 19, 12, .6);
+}
+
+/* chat surfaces */
+.chatLog { background-color: #efe4c8; color: #4a3a26; scrollbar-color: var(--jg-card-shadow) transparent; }
+.chatLine.system { color: #8a7a5a; }
+.chatLine.own .chatWho { color: var(--jg-caatinga); }
+.chatWho { color: var(--jg-teal); }
+#confirmCard > #confirmText, #confirmCard { color: var(--jg-outline); }
+#confirmCard { background-color: var(--jg-parchment); box-shadow: 0 0 0 100vmax rgba(29,19,12,.6); }
+
+/* corner link bars */
+#linksContainer1, #linksContainer2 { background-color: var(--jg-parchment); }
+#linksContainer1 a, #linksContainer2 a { color: var(--jg-leather); }
+#linksContainer1 a:hover, #linksContainer2 a:hover { color: var(--jg-rust); }
+
+/* notices */
+#noticeDisplay, #updateNotice, #shutdownDisplay { background-color: rgba(43, 26, 16, .86); color: var(--jg-parchment); }
+#updateNotice, #shutdownDisplay { color: var(--jg-straw-light); }
+#updateNotice a { color: #fff; }
+#partyButton, #joinPartyButton { color: var(--jg-parchment); }
+#joinPartyButton:hover { color: var(--jg-straw-light); }
+#followText, #youtuberOf { color: var(--jg-parchment); }
+.ytLink, #featuredYoutube a { color: var(--jg-straw-light) !important; }
+.ytLink:hover, #featuredYoutube a:hover { color: var(--jg-straw) !important; }
+
+/* --------------------------------------------------------------------- HUD */
+.uiElement, .resourceDisplay, #leaderboard, #killCounter, #chatBox,
+.actionBarItem, .storeItem, .allianceItem, .allianceButtonM, .notifButton,
+#itemInfoHolder, #noticationDisplay {
+    background-color: var(--jg-hud-bg);
+}
+.actionBarItem:hover, .notifButton:hover, .storeItem:hover, .allianceItem:hover,
+.allianceButtonM:hover { background-color: var(--jg-hud-bg-hover); }
+.actionBarItem { border: 2px solid rgba(244, 234, 210, .12); }
+#mapDisplay { border-color: var(--jg-hud-bg); }
+#pingDisplay, #fpsDisplay, #cpsDisplay { background-color: var(--jg-hud-bg); }
+#settingsButton { background-color: rgba(43, 26, 16, .55); }
+#chatBox { color: #fff; }
+
+/* age / xp bar follows the caatinga ground tone (track dark, fill dry olive) */
+#ageBar { background-color: var(--jg-hud-bg); }
+#ageBarBody { background-color: #8a9450; }
+
+/* auto-gather active state keeps a green affordance, now caatinga */
+#autoGatherButton.active { background-color: rgba(93, 122, 58, .7); }
+#autoGatherButton span { color: #fff; }
+
+/* leaderboard podium accents -> straw gold */
+.leaderScore, #killCounter { color: var(--jg-parchment); }
+#leaderboard .leaderboardItem:first-child { color: var(--jg-straw-light); }
+
+/* store / shop */
+.storeTab { color: #fff; }
+.hatPreview { background-color: var(--jg-sand); }
+.textureTile img { background-color: transparent; }
+
+/* chat toasts + friend prompts while playing */
+.chatToast { background-color: rgba(43, 26, 16, .9); }
+.chatToast.clan { border-left-color: var(--jg-straw); }
+.chatToast.whisper { border-left-color: #a56dc8; }
+.chatToast.note { border-left-color: var(--jg-teal); }
+.chatToastWho { color: var(--jg-straw-light); }
+.chatToastReply { color: #9fc26a; }
+.friendPrompt { background-color: rgba(43, 26, 16, .85); color: #fff; }
+.friendPrompt.notice { color: var(--jg-straw-light); background-color: rgba(43, 26, 16, .92); }
+#friendToast a { color: #9fc26a; }
+#inviteBanner { background-color: var(--jg-parchment); color: var(--jg-outline); }
+#inviteBanner { background-color: rgba(43, 26, 16, .9); color: var(--jg-parchment); }
+
+/* death + victory text stays readable on any biome */
+#diedText { background-color: rgba(43, 26, 16, .55); color: #fff; text-shadow: 0 4px 0 var(--jg-leather-dark); }
+
+/* ------------------------------------------------------------- mobile/touch */
+/* Touch sticks (nipplejs sets inline colors - !important only re-tints them;
+   nothing here hides or resizes the controls). */
+#touch-controls-left .joystick > .back, #touch-controls-right .joystick > .back,
+#touch-controls-fullscreen .joystick > .back {
+    background: rgba(244, 234, 210, .28) !important;
+    border: 2px solid rgba(244, 234, 210, .45) !important;
+}
+#touch-controls-left .joystick > .front, #touch-controls-right .joystick > .front,
+#touch-controls-fullscreen .joystick > .front {
+    background: var(--jg-rust) !important;
+    border: 2px solid var(--jg-leather-dark) !important;
+    opacity: .85 !important;
+}
+
+@media only screen and (max-width: 896px), only screen and (max-height: 500px) {
+    /* keep every control on screen; only re-tint backings for contrast */
+    #settingsButton { background-color: rgba(43, 26, 16, .6); }
+    .gameButton { color: #fff; }
+    .uiElement, .resourceDisplay, #leaderboard, #killCounter,
+    .actionBarItem, .storeItem, .allianceItem, .notifButton {
+        background-color: rgba(43, 26, 16, .52);
+    }
+    #chatToasts { max-width: min(300px, calc(100vw - 32px)); }
+}
+
+/* coarse pointers: slightly larger brand hit affordance on the action bar
+   (visual border only - layout size untouched) */
+@media (pointer: coarse) {
+    .actionBarItem { border: 2px solid rgba(244, 234, 210, .22); }
+}
+
+/* ------------------------------------------------------------ scrollbars */
+.menuCard::-webkit-scrollbar, .chatLog::-webkit-scrollbar { width: 8px; }
+.menuCard::-webkit-scrollbar-thumb, .chatLog::-webkit-scrollbar-thumb {
+    background-color: var(--jg-card-shadow); border-radius: 4px;
+}

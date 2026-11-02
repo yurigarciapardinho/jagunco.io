@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<!-- JAGUNCO.IO brand sheet - visual QA for the official-client reskin.
+     Open from the repo (client-official/jagunco-brand.html). Images resolve via
+     ../client/public/img (the generated sprites) and ../art/source (scene preview).
+     Regenerate everything with: python3 tools/generate_jagunco_assets.py -->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Jagunco.io - Brand Sheet</title>
+<style>
+  body { background:#1d130c; color:#f4ead2; font-family:"Hammersmith One",sans-serif; margin:0; padding:24px; }
+  h1 { color:#f2cd6e; text-shadow:0 3px 0 #4a3120; font-size:44px; margin:0 0 4px; }
+  h2 { color:#d9a441; border-bottom:2px solid #4a3120; padding-bottom:4px; margin-top:32px; font-size:22px; }
+  .sub { color:#a99a76; margin:0 0 16px; }
+  .swatches { display:flex; flex-wrap:wrap; gap:8px; }
+  .sw { width:120px; border-radius:8px; overflow:hidden; border:2px solid #2b1a10; }
+  .sw div { height:44px; }
+  .sw span { display:block; background:#f4ead2; color:#2b1a10; font-size:11px; padding:3px 6px; }
+  .grid { display:flex; flex-wrap:wrap; gap:6px; }
+  .cell { width:64px; text-align:center; }
+  .cell img { width:56px; height:56px; object-fit:contain; image-rendering:auto;
+              background:repeating-conic-gradient(#3a2c1c 0 25%, #2b1f14 0 50%) 0 0/16px 16px;
+              border-radius:6px; border:2px solid #4a3120; }
+  .cell span { font-size:9px; color:#a99a76; word-break:break-all; }
+  .new { outline:2px solid #d9a441; border-radius:8px; }
+  .scene { width:100%; max-width:1100px; border:3px solid #4a3120; border-radius:10px; }
+  .menuCard { background:#f4ead2; box-shadow:0 7px #b09a6a; border-radius:6px; color:#2b1a10;
+              display:inline-block; padding:18px; width:280px; vertical-align:top; }
+  .menuHeader { font-size:24px; }
+  .menuText { color:#7a6a52; }
+  .menuButton { display:block; text-align:center; background:#b8402e; color:#fff; border-radius:6px;
+                padding:8px; box-shadow:0 4px #96331f; cursor:pointer; margin-top:10px; }
+  .nameInput { width:100%; box-sizing:border-box; background:#e8d8b0; color:#3a281a; border:0;
+               border-radius:6px; padding:8px; text-align:center; font-size:18px; }
+  .hud { background:rgba(43,26,16,.48); color:#fff; border-radius:6px; padding:6px 10px;
+         display:inline-flex; gap:8px; align-items:center; margin:4px; font-size:18px; }
+  .hud img { width:26px; height:26px; }
+  .note { color:#a99a76; font-size:13px; max-width:900px; }
+</style>
+</head>
+<body>
+<h1>JAGUNCO.IO</h1>
+<p class="sub">Brand sheet do reskin sertanejo do cliente oficial - sprites gerados, paleta e UI.</p>
+
+<h2>Paleta (art/source/palette.json)</h2>
+<div class="swatches" id="brandSw"></div>
+<h3 style="color:#a99a76">Terreno / biomas (tools/jagunco-renderer-patch.mjs)</h3>
+<div class="swatches" id="terrainSw"></div>
+
+<h2>Cena de referência (biomas + sprites gerados)</h2>
+<img class="scene" src="../art/source/preview-scene.png" alt="cena caatinga">
+
+<h2>Armas + variantes (normal, ouro, diamante, rubi, esmeralda)</h2>
+<div class="grid" id="weapons"></div>
+
+<h2>Projéteis e recursos</h2>
+<div class="grid" id="misc"></div>
+
+<h2>Chapéus e acessórios</h2>
+<div class="grid" id="hats"></div>
+
+<h2>Animais e chefes</h2>
+<div class="grid" id="animals"></div>
+
+<h2>Ícones de ranking / HUD <span class="sub">(os 7 emoldurados em ouro não existiam antes)</span></h2>
+<div class="grid" id="icons"></div>
+
+<h2>UI (menu + HUD com jagunco.css)</h2>
+<div class="menuCard">
+  <div class="menuHeader">Jagunco.io</div>
+  <div class="menuText">Sobreviva na caatinga. Colete, construa, resista.</div>
+  <input class="nameInput" placeholder="Seu nome, cangaceiro">
+  <a class="menuButton">Jogar</a>
+</div>
+<div style="display:inline-block;vertical-align:top;margin-left:16px">
+  <div class="hud"><img src="../client/public/img/resources/wood_ico.png">120</div>
+  <div class="hud"><img src="../client/public/img/resources/food_ico.png">86</div>
+  <div class="hud"><img src="../client/public/img/resources/stone_ico.png">54</div>
+  <div class="hud"><img src="../client/public/img/resources/gold_ico.png">1.2k</div>
+  <div class="hud"><img src="../client/public/img/icons/skull.png">3</div>
+</div>
+<p class="note">Mobile: zonas #touch-controls-left/right/fullscreen e botões de ação não são
+escondidos pelo CSS; os sticks (nipplejs) recebem apenas re-tint via jagunco.css.</p>
+
+<script>
+const BRAND = {outline:"#2b1a10",leather:"#6b4a2a",leather_dark:"#4a3120",straw_gold:"#d9a441",
+  straw_light:"#f2cd6e",rust_red:"#b8402e",caatinga_green:"#5d7a3a",caatinga_dark:"#43592a",
+  sertao_teal:"#3e8a8a",sand:"#e8d8b0",parchment:"#f4ead2",stone:"#8a8578"};
+const TERRAIN = {grass:"#b9a86a",sand:"#d9bd77",snow:"#f4ead2",tuftDark:"#6d7c42",tuftLight:"#8a9450",
+  treeCanopy:"#5d7a3a",river:"#6fae9f",riverDeep:"#548e84",riverShallow:"#d3e6dd",riverFill:"#8fc3b4",
+  woodWall:"#8a6a3a",stoneWall:"#8a8578",castleWall:"#7e7568",goldOre:"#d9a441"};
+const sw=(el,obj)=>{for(const[k,v]of Object.entries(obj)){const d=document.createElement("div");
+  d.className="sw";d.innerHTML=`<div style="background:${v}"></div><span>${k} ${v}</span>`;el.appendChild(d);}};
+sw(document.getElementById("brandSw"),BRAND); sw(document.getElementById("terrainSw"),TERRAIN);
+
+const IMG="../client/public/img/";
+const WEAPONS=["hammer_1","axe_1","great_axe_1","sword_1","samurai_1","spear_1","bat_1","dagger_1",
+  "stick_1","bow_1","great_hammer_1","shield_1","crossbow_1","crossbow_2","grab_1","musket_1"];
+const VAR=["","_g","_d","_r","_e"];
+const NEW={ "weapons/bow_1_d.png":1,"icons/crown_gold.png":1,"icons/crown_silver.png":1,
+  "icons/crown_bronze.png":1,"icons/skull_crown_gold.png":1,"icons/skull_crown_silver.png":1,
+  "icons/skull_crown_bronze.png":1 };
+function fill(el,list){for(const rel of list){const d=document.createElement("div");
+  d.className="cell"+(NEW[rel]?" new":"");const n=rel.split("/").pop().replace(".png","");
+  d.innerHTML=`<img src="${IMG}${rel}" alt="${n}"><span>${n}</span>`;el.appendChild(d);}}
+fill(document.getElementById("weapons"),WEAPONS.flatMap(w=>VAR.map(v=>`weapons/${w}${v}.png`)));
+fill(document.getElementById("misc"),["weapons/arrow_1.png","weapons/bullet_1.png",
+  "resources/food_ico.png","resources/wood_ico.png","resources/stone_ico.png","resources/gold_ico.png"]);
+fill(document.getElementById("hats"),[1,2,4,5,6,7,8,9,10,11,12,13,14,15,18,20,21,22,23,26,27,28,29,30,
+  31,32,35,36,37,38,40,42,43,44,45,46,48,49,50,51,52,55,56,57,58,59,60,61].map(i=>`hats/hat_${i}.png`)
+  .concat([...Array(21)].map((_,i)=>`accessories/access_${i+1}.png`)));
+fill(document.getElementById("animals"),["cow_1","pig_1","bull_1","bull_2","wolf_1","wolf_2","chicken_1",
+  "boar_1","yeti_1","crab_1","sheep_1","enemy","crate_1","duck_1","fish_1","sid","vince"].map(a=>`animals/${a}.png`));
+fill(document.getElementById("icons"),["crown","skull","crown_gold","crown_silver","crown_bronze",
+  "skull_crown_gold","skull_crown_silver","skull_crown_bronze"].map(i=>`icons/${i}.png`).concat(["favicon.png"]));
+</script>
+</body>
+</html>

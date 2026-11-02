@@ -4,3 +4,11 @@ dist
 *.swp
 *.log
 .env
+.env.*
+server/data
+admin.token
+*.pem
+*.key
+*.crt
+*.p12
+verification-shots

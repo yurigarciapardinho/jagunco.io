@@ -32,11 +32,25 @@ verification-shots
 .env
 .env.local
 .env.*.local
+# Clone runtime data (accounts, bans, protocol build pin, admin token)
+server/data/
+admin.token
+# Secrets / private keys
+*.pem
+*.key
+*.crt
+*.p12
 # Database
 *.db
 *.sqlite
 *.sqlite3
 db/migrations/*.sql
+# MySQL local data / dumps
+mysql-data/
+mysqldata/
+mysql/
+*.sql.dump
+*.dump
 # TypeScript cache
 *.tsbuildinfo
 # Build outputs

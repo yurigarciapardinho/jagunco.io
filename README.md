@@ -1,92 +1,107 @@
 # Jagunco.io
 
-Survival multiplayer 2D top-down ambientado no sertão. Entre como convidado, colete recursos, evolua, construa defesas e dispute o ranking da sala contra outros jogadores e animais do mapa.
+Survival multiplayer 2D ambientado no sertão. O servidor é autoritativo e usa o núcleo funcional do clone anexado do MooMoo 1.9.4, com apresentação, identidade, autenticação, persistência e operação próprias do Jagunco. Não há conexão com servidores oficiais do MooMoo ou da FRVR.
 
-## Objetivo
+## Conteúdo e sistemas
 
-Ganhe pontos coletando, caçando, construindo e vencendo confrontos. Madeira e pedra sustentam construções; comida cura; ouro aumenta sua presença na economia da partida. Ao morrer, você pode voltar à mesma sala com parte dos recursos preservada.
+- Mundo de 14.400 × 14.400 unidades, rio com correnteza, neve, deserto e área secreta com arena.
+- 16 armas, 5 variantes por XP, progressão até idade 100 e árvore de upgrades com pré-requisitos.
+- 23 itens em 14 grupos: alimentos, paredes, spikes, moinhos, armadilhas, boost, turret, plataforma, healing pad, spawn pad, blocker e teleporter.
+- 13 tipos ativos de criaturas, incluindo MOOSTAFA, MOOFIE, Treasure e Crab King; Crab e Crabling permanecem dormentes como na referência.
+- 49 chapéus e 21 acessórios com posse, compra e efeitos server-side.
+- Combate corpo a corpo e à distância, knockback, escudos, veneno, sangramento, roubo de vida, morte e respawn.
+- Convidados ou contas com senha scrypt, nomes permanentes, perfis, estatísticas, rankings, amigos, presença, clãs, tribos, chat e mensagens privadas.
+- Moderação, denúncias, verificação de protocolo, tickets de entrada, selo do bundle, sequência de frames e limites de taxa.
+- Controles desktop e touch, configurações, rebinding, loja e editor de aparência.
 
-## Sistemas do MVP
-
-- Sala pública real para até 40 jogadores, sem cadastro.
-- Madeira, comida, pedra e ouro; recursos naturais renascem.
-- Facão, lança e estilingue com alcance, dano e cooldown próprios; armas avançadas entram por escolhas de ramificação.
-- XP e escolhas de nível para armas, dano, velocidade, coleta e vida máxima.
-- Loja autoritativa com cinco equipamentos comprados com ouro, bônus reais e troca gratuita após a compra.
-- Cercas, arame farpado e moinhos com custo, vida e limites por jogador.
-- Cabras que reagem e fogem de jogadores; porcos-do-mato que perseguem e atacam.
-- PvP, morte, respawn, cura e ranking da sala.
-- Controles por teclado/mouse e joystick/botões de toque.
-- Atlas visual de caatinga com personagens, armas, animais, recursos e construções; animações de caminhada, golpe, impacto e moinho.
-- Partículas, câmera com impacto, mira responsiva e áudio sintetizado.
-
-## Controles
-
-| Ação | Controle |
-| --- | --- |
-| Mover | WASD ou setas; joystick esquerdo no toque |
-| Mirar | Mouse; arraste no lado direito no toque |
-| Atacar | Espaço, E, botão esquerdo ou ATACAR no toque |
-| Armas | 1, 2 e 3 |
-| Construir | Z (cerca), X (arame), C (moinho) |
-| Loja e equipamentos | B ou botão da loja |
-| Curar | Q; consome 10 comidas e recupera 35 de vida |
-| Pausar localmente | Esc; a sala multiplayer continua ativa |
-| Silenciar | M ou botão de áudio |
-| Respawn | Espaço ou botão na tela de morte |
+A matriz de origem, adaptações, estado e evidências está em `PARITY.md`.
 
 ## Executar
 
 Requer Node.js 20 ou superior.
 
 ```bash
-npm install
-npm run dev
-```
-
-Abra `http://localhost:3000`. Para produção:
-
-```bash
+npm ci
 npm run build
 npm start
 ```
 
-O processo Hono serve o cliente e aceita o WebSocket em `/api/game/ws`; não é necessário um segundo serviço. O MVP usa sessões de convidados em memória e não grava contas ou ranking global no MySQL.
+Abra `http://localhost:3000`. O build gera:
 
-## Verificação
+- `dist/boot.js`: servidor completo empacotado, escutando em `0.0.0.0:3000`;
+- `dist/official/`: cliente 1.9.4 patchado e reskinado;
+- `dist/public/`: sprites, fontes e demais arquivos estáticos, todos locais.
+
+Para rodar diretamente do código-fonte em desenvolvimento:
 
 ```bash
-npm run check
-npm run test
+npm run start:source
+```
+
+`PORT`, `HOST` e `DATA_DIR` podem ser configurados. Sem `NODE_ENV=production`, o modo de desenvolvimento pode usar arquivos em `DATA_DIR`.
+
+## Produção e persistência
+
+Produção exige **MySQL** e um segredo de aplicação:
+
+```dotenv
+APP_SECRET=<valor-longo-e-aleatorio>
+DATABASE_URL=mysql://usuario:senha@host:3306/jagunco
+```
+
+Contas, credenciais, preferências, perfis, estatísticas, amigos, clãs, chat e moderação são hidratados no boot e persistidos em 24 tabelas relacionais. As escritas são assíncronas e enfileiradas fora do loop da partida; o desligamento faz flush antes de encerrar. Sem `DATABASE_URL` ou `APP_SECRET`, o boot de produção falha explicitamente em vez de apresentar arquivos locais como persistência.
+
+A partida transitória continua em memória. Uma queda de WebSocket tem 30 segundos de grace para retomar a mesma sessão, posição, recursos e construções sem duplicação; kick e ban não retomam. Isso não é apresentado como persistência integral do mundo após reinício.
+
+### Docker Compose
+
+O Compose inclui aplicação, MySQL 8.4 com volume e Caddy na porta 80:
+
+```bash
+cp .env.example .env
+# Preencha APP_SECRET, MYSQL_PASSWORD e MYSQL_ROOT_PASSWORD no .env.
+docker compose up -d --build
+```
+
+Somente o Caddy é exposto. O banco e a aplicação ficam na rede interna. `game-data` guarda apenas o pin do protocolo e o token administrativo local; os dados sociais ficam em `mysql-data`.
+
+## Testes e verificação
+
+```bash
+npm test                         # testes de servidor e regressões
+node --test server/src/network/reconnection.test.js
+node scripts/verify-authoritative.mjs
 npm run build
+node scripts/verify-mobile.mjs
 ```
 
-Com o servidor de produção em execução:
+Smoke operacional:
 
 ```bash
-npm run verify:multiplayer
-npm run verify:protocol
+curl http://localhost:3000/ping
+curl http://localhost:3000/s/LC/ping
 ```
 
-O primeiro roteiro abre dois clientes reais e cobre loja, bloqueio inicial de armas, movimento, coleta, ranking compartilhado, pausa, PvP, morte e respawn. O segundo testa pacotes inválidos, flood e payload excessivo somente contra a infraestrutura local do Jagunco.
+O console administrativo aceita comandos apenas por loopback e exige o token de `DATA_DIR/admin.token`. Não exponha esse arquivo nem o `.env`.
 
 ## Arquitetura
 
-- **Cliente:** TypeScript, Vite, PixiJS 8/WebGL 2 e React somente para o shell/HUD.
-- **Rede:** WebSocket binário, MessagePack e protocolo versionado.
-- **Servidor:** Node.js, Hono e simulação autoritativa com timestep fixo de 30 Hz.
-- **Sincronização:** snapshots a 15 Hz, predição do jogador local, reconciliação por ACK e interpolação temporal de posição e ângulo das entidades remotas.
-- **Desempenho:** spatial hash para AOI e colisões, envio de objetos estáticos por mudança, limites de catch-up e limite de payload.
-- **Determinismo:** geração de mundo e IA usam PRNG com seed; o estado da partida não depende de `Math.random()`.
+- `server/src/moomoo/`: simulação autoritativa — jogador, física, combate, IA, objetos, projéteis e tribos.
+- `shared/`: fonte única de armas, itens, variantes, loja, mapa e regras compartilhadas.
+- `server/src/network/`: protocolo, validação, tickets, anticheat e reconexão.
+- `server/src/api/`: contas, amigos, clãs, perfis, chat e moderação.
+- `server/src/persistence/`: Drizzle + MySQL, migrações idempotentes e fila de escrita.
+- `client-official/`: cliente 1.9.4 e shim local de serviços; o build não chama serviços externos.
+- `tools/build-official-client.mjs`: patches de rede, autenticação senha-first, marca e renderer.
+- `art/source/` e `tools/generate_jagunco_assets.py`: fontes editáveis e pipeline de 186 sprites.
+- `scripts/build-clone.mjs`: build único de servidor, cliente, assets e módulo touch.
 
-O servidor valida movimento, alcance, cooldown, dano, recompensas, custos, limites de construção, escolhas de nível, preços, propriedade, equipamento, bônus, cura e respawn. Limites de taxa e de protocolo reduzem abuso, mas não tornam toda trapaça impossível.
+Sandbox e recursos infinitos são opt-in de desenvolvimento (`IS_SANDBOX=1`, `SANDBOX_UNLIMITED=1`). Em produção, custos e limites normais estão sempre ativos.
 
-## Escopo atual
+## Limites da referência
 
-Este é um vertical slice completo com uma base visual própria em evolução, não o jogo final. Contas, clãs, amigos, chat, chefes, ranking global, persistência de personagens entre sessões e WebTransport ficam para etapas posteriores. Itens e desbloqueios sobrevivem ao respawn, mas a sala em memória é reiniciada com o processo.
+O código do servidor oficial do MooMoo não é público. A referência é o cliente 1.9.4 e o servidor reconstruído anexado; regras reconstruídas não são apresentadas como equivalência interna perfeita com o servidor privado oficial. Serviços FRVR, anúncios, analytics e captcha externa foram substituídos por fluxos locais. Contas usam senha real; o fluxo de demonstração que aceitava qualquer código foi desativado.
 
-## Licença e referências
+## Licença e créditos
 
-Código e arte deste projeto estão sob WTFPL; veja `LICENSE`. As fontes locais têm licenças próprias registradas em `CREDITS.md` e `public/fonts/OFL.txt`.
-
-Os repositórios `MooMooForge/moomoo-in-depth`, `al007ex/moomoo-clone` e o pacote `game-elements` foram usados como referência de estudo, padrões de implementação e elementos visuais CC0. Os sprites de cabra e porco-do-mato foram adaptados do pacote CC0; personagens, armas, recursos, construções e terreno foram desenhados para o Jagunco. Jagunco.io não se conecta aos servidores oficiais do Moomoo.
+Veja `LICENSE`, `MOOMOO_CLONE_LICENSE.md` e `CREDITS.md`. Fontes, bibliotecas e materiais de referência têm seus avisos preservados.

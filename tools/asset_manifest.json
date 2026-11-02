@@ -1,0 +1,1912 @@
+{
+ "generated_at": "2026-11-02T21:47:48.275806+00:00",
+ "palette": "art/source/palette.json",
+ "silhouettes": "art/source/silhouettes",
+ "output": "client/public/img",
+ "groups": {
+  "weapons": 82,
+  "hats": 52,
+  "accessories": 21,
+  "animals": 17,
+  "icons": 8,
+  "resources": 4,
+  "root": 1,
+  "promotion": 1
+ },
+ "files": [
+  {
+   "path": "weapons/hammer_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "727223251468",
+   "opaque_ratio": 0.1941
+  },
+  {
+   "path": "weapons/hammer_1_g.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "a3abd450ed45",
+   "opaque_ratio": 0.2009
+  },
+  {
+   "path": "weapons/hammer_1_d.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "67d1b53f36f1",
+   "opaque_ratio": 0.2098
+  },
+  {
+   "path": "weapons/hammer_1_r.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "8070adf4bf3b",
+   "opaque_ratio": 0.2288
+  },
+  {
+   "path": "weapons/hammer_1_e.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "b2086beb8e1c",
+   "opaque_ratio": 0.2512
+  },
+  {
+   "path": "weapons/axe_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "88f2dfb1009b",
+   "opaque_ratio": 0.2379
+  },
+  {
+   "path": "weapons/axe_1_g.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "a60896ce6209",
+   "opaque_ratio": 0.2852
+  },
+  {
+   "path": "weapons/axe_1_d.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "c175a8ba5f1a",
+   "opaque_ratio": 0.3235
+  },
+  {
+   "path": "weapons/axe_1_r.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "6f324b7c03cd",
+   "opaque_ratio": 0.3112
+  },
+  {
+   "path": "weapons/axe_1_e.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "5061a0cbb42c",
+   "opaque_ratio": 0.3499
+  },
+  {
+   "path": "weapons/great_axe_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "a5912a8575e5",
+   "opaque_ratio": 0.2645
+  },
+  {
+   "path": "weapons/great_axe_1_g.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "f3c009245fca",
+   "opaque_ratio": 0.3349
+  },
+  {
+   "path": "weapons/great_axe_1_d.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "4071dc408fac",
+   "opaque_ratio": 0.388
+  },
+  {
+   "path": "weapons/great_axe_1_r.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "bc519e042311",
+   "opaque_ratio": 0.3871
+  },
+  {
+   "path": "weapons/great_axe_1_e.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "ba93e08accfa",
+   "opaque_ratio": 0.4202
+  },
+  {
+   "path": "weapons/sword_1.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "403436e7cfd5",
+   "opaque_ratio": 0.1701
+  },
+  {
+   "path": "weapons/sword_1_g.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "b4f9b1d6e43e",
+   "opaque_ratio": 0.1701
+  },
+  {
+   "path": "weapons/sword_1_d.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "aa4822a23c44",
+   "opaque_ratio": 0.2021
+  },
+  {
+   "path": "weapons/sword_1_r.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "3ed1b446d8d0",
+   "opaque_ratio": 0.1939
+  },
+  {
+   "path": "weapons/sword_1_e.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "2a35a8670345",
+   "opaque_ratio": 0.219
+  },
+  {
+   "path": "weapons/samurai_1.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "34e9e627112f",
+   "opaque_ratio": 0.1552
+  },
+  {
+   "path": "weapons/samurai_1_g.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "dabd4130f727",
+   "opaque_ratio": 0.1552
+  },
+  {
+   "path": "weapons/samurai_1_d.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "f6f31c744199",
+   "opaque_ratio": 0.1934
+  },
+  {
+   "path": "weapons/samurai_1_r.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "62416e2ef0ee",
+   "opaque_ratio": 0.2088
+  },
+  {
+   "path": "weapons/samurai_1_e.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "2df54e9a4865",
+   "opaque_ratio": 0.2339
+  },
+  {
+   "path": "weapons/spear_1.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "ce1a002503ba",
+   "opaque_ratio": 0.1563
+  },
+  {
+   "path": "weapons/spear_1_g.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "c94b3d13ab7d",
+   "opaque_ratio": 0.1728
+  },
+  {
+   "path": "weapons/spear_1_d.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "eb8d3b2ef45b",
+   "opaque_ratio": 0.1833
+  },
+  {
+   "path": "weapons/spear_1_r.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "0f4a9c6e13fe",
+   "opaque_ratio": 0.1904
+  },
+  {
+   "path": "weapons/spear_1_e.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "2159e7473cac",
+   "opaque_ratio": 0.2469
+  },
+  {
+   "path": "weapons/bat_1.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "3a49cb0f15a0",
+   "opaque_ratio": 0.1972
+  },
+  {
+   "path": "weapons/bat_1_g.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "43245b20b085",
+   "opaque_ratio": 0.2049
+  },
+  {
+   "path": "weapons/bat_1_d.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "bfdcba82225c",
+   "opaque_ratio": 0.2393
+  },
+  {
+   "path": "weapons/bat_1_r.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "01525f697a81",
+   "opaque_ratio": 0.3187
+  },
+  {
+   "path": "weapons/bat_1_e.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "4ef90ccb8f26",
+   "opaque_ratio": 0.209
+  },
+  {
+   "path": "weapons/dagger_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "546f9a4f1edb",
+   "opaque_ratio": 0.2333
+  },
+  {
+   "path": "weapons/dagger_1_g.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "6c7f9aff6907",
+   "opaque_ratio": 0.2315
+  },
+  {
+   "path": "weapons/dagger_1_d.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "24ae50a3afb3",
+   "opaque_ratio": 0.2798
+  },
+  {
+   "path": "weapons/dagger_1_r.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "5fd09c5658db",
+   "opaque_ratio": 0.3686
+  },
+  {
+   "path": "weapons/dagger_1_e.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "2dea653a49f8",
+   "opaque_ratio": 0.3563
+  },
+  {
+   "path": "weapons/stick_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "b9a763e1fe92",
+   "opaque_ratio": 0.1484
+  },
+  {
+   "path": "weapons/stick_1_g.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "f1b151fc626a",
+   "opaque_ratio": 0.1487
+  },
+  {
+   "path": "weapons/stick_1_d.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "c289e8120d2a",
+   "opaque_ratio": 0.1487
+  },
+  {
+   "path": "weapons/stick_1_r.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "74a24c3297de",
+   "opaque_ratio": 0.1577
+  },
+  {
+   "path": "weapons/stick_1_e.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "806d071e029a",
+   "opaque_ratio": 0.1714
+  },
+  {
+   "path": "weapons/bow_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "b9637c46a0dc",
+   "opaque_ratio": 0.1663
+  },
+  {
+   "path": "weapons/bow_1_g.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "0428a7574907",
+   "opaque_ratio": 0.1791
+  },
+  {
+   "path": "weapons/bow_1_d.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "4fd3b8a46bc2",
+   "opaque_ratio": 0.1791
+  },
+  {
+   "path": "weapons/bow_1_r.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "3a628359d14f",
+   "opaque_ratio": 0.2337
+  },
+  {
+   "path": "weapons/bow_1_e.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "71a7cfa0fcc3",
+   "opaque_ratio": 0.2509
+  },
+  {
+   "path": "weapons/great_hammer_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "be1dd63177f3",
+   "opaque_ratio": 0.2596
+  },
+  {
+   "path": "weapons/great_hammer_1_g.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "5bb8bf87732a",
+   "opaque_ratio": 0.2811
+  },
+  {
+   "path": "weapons/great_hammer_1_d.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "7808ff9fce34",
+   "opaque_ratio": 0.2827
+  },
+  {
+   "path": "weapons/great_hammer_1_r.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "3ce574a6e443",
+   "opaque_ratio": 0.2867
+  },
+  {
+   "path": "weapons/great_hammer_1_e.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "9cff2c0574e3",
+   "opaque_ratio": 0.3036
+  },
+  {
+   "path": "weapons/shield_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "58da263c65f1",
+   "opaque_ratio": 0.2364
+  },
+  {
+   "path": "weapons/shield_1_g.png",
+   "size": [
+    276,
+    276
+   ],
+   "source": "silhouette",
+   "sha1": "0c6681c7a58c",
+   "opaque_ratio": 0.2203
+  },
+  {
+   "path": "weapons/shield_1_d.png",
+   "size": [
+    276,
+    276
+   ],
+   "source": "silhouette",
+   "sha1": "8d3ae25e44ef",
+   "opaque_ratio": 0.2203
+  },
+  {
+   "path": "weapons/shield_1_r.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "3ee0c444b324",
+   "opaque_ratio": 0.2427
+  },
+  {
+   "path": "weapons/shield_1_e.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "4bb657c6884f",
+   "opaque_ratio": 0.2834
+  },
+  {
+   "path": "weapons/crossbow_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "c5f358a46f5f",
+   "opaque_ratio": 0.2515
+  },
+  {
+   "path": "weapons/crossbow_1_g.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "8490c9f78238",
+   "opaque_ratio": 0.2604
+  },
+  {
+   "path": "weapons/crossbow_1_d.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "66a5794d1eb1",
+   "opaque_ratio": 0.2604
+  },
+  {
+   "path": "weapons/crossbow_1_r.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "5675c7aacde4",
+   "opaque_ratio": 0.2958
+  },
+  {
+   "path": "weapons/crossbow_1_e.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "463ce50a74bd",
+   "opaque_ratio": 0.3314
+  },
+  {
+   "path": "weapons/crossbow_2.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "3611b35e518d",
+   "opaque_ratio": 0.2956
+  },
+  {
+   "path": "weapons/crossbow_2_g.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "b0f35d1c9ca7",
+   "opaque_ratio": 0.3045
+  },
+  {
+   "path": "weapons/crossbow_2_d.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "f4aed79a7b07",
+   "opaque_ratio": 0.3054
+  },
+  {
+   "path": "weapons/crossbow_2_r.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "fe408de1ae07",
+   "opaque_ratio": 0.3585
+  },
+  {
+   "path": "weapons/crossbow_2_e.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "38c0e412c8c1",
+   "opaque_ratio": 0.4158
+  },
+  {
+   "path": "weapons/grab_1.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "637681b653b1",
+   "opaque_ratio": 0.2083
+  },
+  {
+   "path": "weapons/grab_1_g.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "6f8f03cab343",
+   "opaque_ratio": 0.2083
+  },
+  {
+   "path": "weapons/grab_1_d.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "a1796039e1e0",
+   "opaque_ratio": 0.2083
+  },
+  {
+   "path": "weapons/grab_1_r.png",
+   "size": [
+    256,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "ff36d685747d",
+   "opaque_ratio": 0.2083
+  },
+  {
+   "path": "weapons/grab_1_e.png",
+   "size": [
+    192,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "e0b42eb34b90",
+   "opaque_ratio": 0.2571
+  },
+  {
+   "path": "weapons/musket_1.png",
+   "size": [
+    400,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "0709f5c6b618",
+   "opaque_ratio": 0.0867
+  },
+  {
+   "path": "weapons/musket_1_g.png",
+   "size": [
+    400,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "ce5035f7093f",
+   "opaque_ratio": 0.0989
+  },
+  {
+   "path": "weapons/musket_1_d.png",
+   "size": [
+    400,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "b08eeb4e98ee",
+   "opaque_ratio": 0.1058
+  },
+  {
+   "path": "weapons/musket_1_r.png",
+   "size": [
+    400,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "11ce528a7409",
+   "opaque_ratio": 0.1163
+  },
+  {
+   "path": "weapons/musket_1_e.png",
+   "size": [
+    400,
+    400
+   ],
+   "source": "silhouette",
+   "sha1": "cfa482ff98f8",
+   "opaque_ratio": 0.1555
+  },
+  {
+   "path": "weapons/arrow_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "9a733ed9642a",
+   "opaque_ratio": 0.1347
+  },
+  {
+   "path": "weapons/bullet_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "b8f53206a47a",
+   "opaque_ratio": 0.0189
+  },
+  {
+   "path": "hats/hat_1.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "15559d3f6af6",
+   "opaque_ratio": 0.3872
+  },
+  {
+   "path": "hats/hat_2.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "f769c85627e0",
+   "opaque_ratio": 0.3789
+  },
+  {
+   "path": "hats/hat_4.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "3eef2a6925f6",
+   "opaque_ratio": 0.3789
+  },
+  {
+   "path": "hats/hat_5.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "af2160005df2",
+   "opaque_ratio": 0.3789
+  },
+  {
+   "path": "hats/hat_6.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "884ec7e198db",
+   "opaque_ratio": 0.3789
+  },
+  {
+   "path": "hats/hat_7.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "0171ad6821cc",
+   "opaque_ratio": 0.4179
+  },
+  {
+   "path": "hats/hat_8.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "f6ac9a61ecfe",
+   "opaque_ratio": 0.3789
+  },
+  {
+   "path": "hats/hat_9.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "06e1a7f819c7",
+   "opaque_ratio": 0.4203
+  },
+  {
+   "path": "hats/hat_10.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "05e66748fe60",
+   "opaque_ratio": 0.5061
+  },
+  {
+   "path": "hats/hat_11.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "e2e7baf29437",
+   "opaque_ratio": 0.3098
+  },
+  {
+   "path": "hats/hat_12.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "a71a03bbd633",
+   "opaque_ratio": 0.3789
+  },
+  {
+   "path": "hats/hat_13.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "b16639b03c63",
+   "opaque_ratio": 0.4634
+  },
+  {
+   "path": "hats/hat_14.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "2742ba550007",
+   "opaque_ratio": 0.31
+  },
+  {
+   "path": "hats/hat_15.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "f842530271ae",
+   "opaque_ratio": 0.3789
+  },
+  {
+   "path": "hats/hat_18.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "a65d9a742cda",
+   "opaque_ratio": 0.3872
+  },
+  {
+   "path": "hats/hat_20.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "ae2860d08a02",
+   "opaque_ratio": 0.3912
+  },
+  {
+   "path": "hats/hat_21.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "dca7c6914192",
+   "opaque_ratio": 0.4394
+  },
+  {
+   "path": "hats/hat_22.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "8be6b5e79f1e",
+   "opaque_ratio": 0.3912
+  },
+  {
+   "path": "hats/hat_23.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "72912af7d34d",
+   "opaque_ratio": 0.3789
+  },
+  {
+   "path": "hats/hat_26.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "2178942391dc",
+   "opaque_ratio": 0.4249
+  },
+  {
+   "path": "hats/hat_27.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "7297de26a05d",
+   "opaque_ratio": 0.4521
+  },
+  {
+   "path": "hats/hat_28.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "17039d73762e",
+   "opaque_ratio": 0.4853
+  },
+  {
+   "path": "hats/hat_29.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "9cd6b13ad4cc",
+   "opaque_ratio": 0.462
+  },
+  {
+   "path": "hats/hat_30.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "4f551b119a1f",
+   "opaque_ratio": 0.4861
+  },
+  {
+   "path": "hats/hat_31.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "bc4e0a2f6ac5",
+   "opaque_ratio": 0.5097
+  },
+  {
+   "path": "hats/hat_32.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "02138a3a75a5",
+   "opaque_ratio": 0.353
+  },
+  {
+   "path": "hats/hat_35.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "17399c3c46a3",
+   "opaque_ratio": 0.1598
+  },
+  {
+   "path": "hats/hat_36.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "3d3ad5eb1aca",
+   "opaque_ratio": 0.5216
+  },
+  {
+   "path": "hats/hat_37.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "0a893e471abe",
+   "opaque_ratio": 0.5148
+  },
+  {
+   "path": "hats/hat_38.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "3b2f521e85f5",
+   "opaque_ratio": 0.5216
+  },
+  {
+   "path": "hats/hat_40.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "98d4fc2d5a39",
+   "opaque_ratio": 0.4871
+  },
+  {
+   "path": "hats/hat_42.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "b61366fdb416",
+   "opaque_ratio": 0.4918
+  },
+  {
+   "path": "hats/hat_43.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "0f6b1cbd8967",
+   "opaque_ratio": 0.379
+  },
+  {
+   "path": "hats/hat_44.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "073353af2afa",
+   "opaque_ratio": 0.5148
+  },
+  {
+   "path": "hats/hat_45.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "d764b7c54f4f",
+   "opaque_ratio": 0.5843
+  },
+  {
+   "path": "hats/hat_46.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "e09d8330d30e",
+   "opaque_ratio": 0.5211
+  },
+  {
+   "path": "hats/hat_48.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "d0aef7582feb",
+   "opaque_ratio": 0.1484
+  },
+  {
+   "path": "hats/hat_49.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "085d7a54fa8b",
+   "opaque_ratio": 0.5225
+  },
+  {
+   "path": "hats/hat_50.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "b3b2ff50dfb2",
+   "opaque_ratio": 0.2735
+  },
+  {
+   "path": "hats/hat_51.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "0ff72b762293",
+   "opaque_ratio": 0.2735
+  },
+  {
+   "path": "hats/hat_52.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "6a75fc5f8c1d",
+   "opaque_ratio": 0.5896
+  },
+  {
+   "path": "hats/hat_55.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "be63847f7400",
+   "opaque_ratio": 0.4935
+  },
+  {
+   "path": "hats/hat_56.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "1d20532d8c90",
+   "opaque_ratio": 0.4504
+  },
+  {
+   "path": "hats/hat_57.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "e54918dfcd74",
+   "opaque_ratio": 0.4945
+  },
+  {
+   "path": "hats/hat_58.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "c4a99ae05a92",
+   "opaque_ratio": 0.5419
+  },
+  {
+   "path": "hats/hat_59.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "a5c51a0c04bc",
+   "opaque_ratio": 0.3983
+  },
+  {
+   "path": "hats/hat_60.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "a8e7543ce623",
+   "opaque_ratio": 0.4161
+  },
+  {
+   "path": "hats/hat_61.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "e48f6f733e0b",
+   "opaque_ratio": 0.2706
+  },
+  {
+   "path": "hats/hat_11_top.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "dbf214eab578",
+   "opaque_ratio": 0.2637
+  },
+  {
+   "path": "hats/hat_11_p.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "c02bde41bdb3",
+   "opaque_ratio": 0.3555
+  },
+  {
+   "path": "hats/hat_14_top.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "0b7022a43c29",
+   "opaque_ratio": 0.3156
+  },
+  {
+   "path": "hats/hat_14_p.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "70d3d5dd43ed",
+   "opaque_ratio": 0.4066
+  },
+  {
+   "path": "accessories/access_1.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "aff4b83bf081",
+   "opaque_ratio": 0.5629
+  },
+  {
+   "path": "accessories/access_2.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "d8ce2fab3c3c",
+   "opaque_ratio": 0.5629
+  },
+  {
+   "path": "accessories/access_3.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "1700dad46b1c",
+   "opaque_ratio": 0.5629
+  },
+  {
+   "path": "accessories/access_4.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "e892f3f1fe74",
+   "opaque_ratio": 0.5629
+  },
+  {
+   "path": "accessories/access_5.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "2fc8bfd0b661",
+   "opaque_ratio": 0.5629
+  },
+  {
+   "path": "accessories/access_6.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "3f5eead6001d",
+   "opaque_ratio": 0.5629
+  },
+  {
+   "path": "accessories/access_7.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "1ef907be339b",
+   "opaque_ratio": 0.5629
+  },
+  {
+   "path": "accessories/access_8.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "0f32a142cbab",
+   "opaque_ratio": 0.5624
+  },
+  {
+   "path": "accessories/access_9.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "1158f6519ab7",
+   "opaque_ratio": 0.5629
+  },
+  {
+   "path": "accessories/access_10.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "50b9b40801b1",
+   "opaque_ratio": 0.5629
+  },
+  {
+   "path": "accessories/access_11.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "132d748843a1",
+   "opaque_ratio": 0.2208
+  },
+  {
+   "path": "accessories/access_12.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "3ce5583e5f8a",
+   "opaque_ratio": 0.1998
+  },
+  {
+   "path": "accessories/access_13.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "20e2d0954d6c",
+   "opaque_ratio": 0.2789
+  },
+  {
+   "path": "accessories/access_14.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "d6ae718bf0af",
+   "opaque_ratio": 0.2144
+  },
+  {
+   "path": "accessories/access_15.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "8bea3e0028ff",
+   "opaque_ratio": 0.4166
+  },
+  {
+   "path": "accessories/access_16.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "86b12c8baee5",
+   "opaque_ratio": 0.5897
+  },
+  {
+   "path": "accessories/access_17.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "c253720064c3",
+   "opaque_ratio": 0.7811
+  },
+  {
+   "path": "accessories/access_18.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "7a47e303791f",
+   "opaque_ratio": 0.1726
+  },
+  {
+   "path": "accessories/access_19.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "8e905f956e19",
+   "opaque_ratio": 0.2821
+  },
+  {
+   "path": "accessories/access_20.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "776fe7f442f4",
+   "opaque_ratio": 0.315
+  },
+  {
+   "path": "accessories/access_21.png",
+   "size": [
+    200,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "9e26b31fcfe8",
+   "opaque_ratio": 0.2027
+  },
+  {
+   "path": "animals/cow_1.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "c65ff70a6caa",
+   "opaque_ratio": 0.4827
+  },
+  {
+   "path": "animals/pig_1.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "c364f57a23e7",
+   "opaque_ratio": 0.3953
+  },
+  {
+   "path": "animals/bull_1.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "a1e9e3f8e1e5",
+   "opaque_ratio": 0.4985
+  },
+  {
+   "path": "animals/bull_2.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "ef96f869906d",
+   "opaque_ratio": 0.4985
+  },
+  {
+   "path": "animals/wolf_1.png",
+   "size": [
+    300,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "1e6f5847e8ac",
+   "opaque_ratio": 0.3427
+  },
+  {
+   "path": "animals/wolf_2.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "df426d2e46d8",
+   "opaque_ratio": 0.4573
+  },
+  {
+   "path": "animals/chicken_1.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "0334d5edb629",
+   "opaque_ratio": 0.2175
+  },
+  {
+   "path": "animals/boar_1.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "c1f3332067c0",
+   "opaque_ratio": 0.3841
+  },
+  {
+   "path": "animals/yeti_1.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "ab4ff11572b1",
+   "opaque_ratio": 0.5724
+  },
+  {
+   "path": "animals/crab_1.png",
+   "size": [
+    640,
+    640
+   ],
+   "source": "silhouette",
+   "sha1": "b631858073bf",
+   "opaque_ratio": 0.5008
+  },
+  {
+   "path": "animals/sheep_1.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "732035a487fe",
+   "opaque_ratio": 0.4201
+  },
+  {
+   "path": "animals/enemy.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "6b8ce658a815",
+   "opaque_ratio": 0.2578
+  },
+  {
+   "path": "animals/crate_1.png",
+   "size": [
+    128,
+    128
+   ],
+   "source": "silhouette",
+   "sha1": "85d215c11807",
+   "opaque_ratio": 0.5217
+  },
+  {
+   "path": "animals/duck_1.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "590103d96472",
+   "opaque_ratio": 0.2197
+  },
+  {
+   "path": "animals/fish_1.png",
+   "size": [
+    263,
+    300
+   ],
+   "source": "silhouette",
+   "sha1": "8b8d0b1b9e79",
+   "opaque_ratio": 0.0824
+  },
+  {
+   "path": "animals/sid.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "ad3d701dd574",
+   "opaque_ratio": 0.2316
+  },
+  {
+   "path": "animals/vince.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "9ac810e9c531",
+   "opaque_ratio": 0.2129
+  },
+  {
+   "path": "icons/crown.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "177ad50c6a77",
+   "opaque_ratio": 0.2941
+  },
+  {
+   "path": "icons/skull.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "f64e7e00aa2e",
+   "opaque_ratio": 0.4537
+  },
+  {
+   "path": "icons/crown_gold.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "synthesized",
+   "sha1": "e2b0889f6f1a",
+   "opaque_ratio": 0.2941
+  },
+  {
+   "path": "icons/crown_silver.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "synthesized",
+   "sha1": "2f5a4ba0e522",
+   "opaque_ratio": 0.2941
+  },
+  {
+   "path": "icons/crown_bronze.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "synthesized",
+   "sha1": "311fb3c4c330",
+   "opaque_ratio": 0.2941
+  },
+  {
+   "path": "icons/skull_crown_gold.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "synthesized",
+   "sha1": "d6247080599a",
+   "opaque_ratio": 0.4537
+  },
+  {
+   "path": "icons/skull_crown_silver.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "synthesized",
+   "sha1": "c92f0f333111",
+   "opaque_ratio": 0.4537
+  },
+  {
+   "path": "icons/skull_crown_bronze.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "synthesized",
+   "sha1": "14a0e7a7ec95",
+   "opaque_ratio": 0.4537
+  },
+  {
+   "path": "resources/food_ico.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "51d3f6a0a8c7",
+   "opaque_ratio": 0.7045
+  },
+  {
+   "path": "resources/wood_ico.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "a3eae7756afc",
+   "opaque_ratio": 0.5679
+  },
+  {
+   "path": "resources/stone_ico.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "5787681dbf64",
+   "opaque_ratio": 0.679
+  },
+  {
+   "path": "resources/gold_ico.png",
+   "size": [
+    256,
+    256
+   ],
+   "source": "silhouette",
+   "sha1": "73dcf82f7a7c",
+   "opaque_ratio": 0.6685
+  },
+  {
+   "path": "favicon.png",
+   "size": [
+    32,
+    32
+   ],
+   "source": "synthesized",
+   "sha1": "047172fd0d0e",
+   "opaque_ratio": 0.627
+  },
+  {
+   "path": "promotion/banner_4.png",
+   "size": [
+    640,
+    200
+   ],
+   "source": "silhouette",
+   "sha1": "e75f4b47311d",
+   "opaque_ratio": 1.0
+  }
+ ],
+ "total": 186,
+ "coverage": {
+  "weapon_variants": "16 weapons x 5 variants - complete",
+  "leaderboard_icons": [
+   "crown",
+   "skull",
+   "crown_gold",
+   "crown_silver",
+   "crown_bronze",
+   "skull_crown_gold",
+   "skull_crown_silver",
+   "skull_crown_bronze"
+  ],
+  "hud_resource_icons": [
+   "food_ico",
+   "wood_ico",
+   "stone_ico",
+   "gold_ico"
+  ],
+  "projectiles": [
+   "weapons/arrow_1.png",
+   "weapons/bullet_1.png"
+  ],
+  "mobile_touch_controls": {
+   "status": "DOM zones #touch-controls-left/right/fullscreen exist in page.html and are styled by client-official/jagunco.css; the joystick itself comes from a dynamic chunk (index-d71d2980.js, nipplejs) that is not part of the saved page - see README notes / build integration.",
+   "css_hooks": [
+    ".nipple",
+    ".nipple .front",
+    ".nipple .back",
+    "#touch-controls-left",
+    "#touch-controls-right"
+   ]
+  }
+ }
+}

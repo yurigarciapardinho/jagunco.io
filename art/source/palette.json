@@ -1,0 +1,82 @@
+{
+  "comment": "Jagunco.io sertanejo palette + recolor rules for tools/generate_jagunco_assets.py. Edit the hex colors / HSV bands and re-run the generator to re-skin the whole official client. All hues are degrees (0-360), s/v are 0-1. Luminance (v) of the source pixel is always preserved so shading, silhouette, scale and hitbox stay identical to the original sprite.",
+  "brand": {
+    "outline": "#2b1a10",
+    "leather": "#6b4a2a",
+    "leather_dark": "#4a3120",
+    "straw_gold": "#d9a441",
+    "straw_light": "#f2cd6e",
+    "rust_red": "#b8402e",
+    "caatinga_green": "#5d7a3a",
+    "caatinga_dark": "#43592a",
+    "sertao_teal": "#3e8a8a",
+    "sand": "#e8d8b0",
+    "parchment": "#f4ead2",
+    "stone": "#8a8578"
+  },
+  "recolor": {
+    "outline": { "v_max": 0.34, "hue": 24, "sat": 0.52 },
+    "neutral": { "s_max": 0.17, "hue": 33, "sat_scale": 0.6, "sat_add": 0.05 },
+    "bands": [
+      { "lo": 0,   "hi": 16,  "hue": 10,  "sat_scale": 1.05, "note": "red -> rust red (cangaco bandana)" },
+      { "lo": 18,  "hi": 46,  "hue": 29,  "sat_scale": 1.0,  "note": "orange/brown -> leather" },
+      { "lo": 46,  "hi": 75,  "hue": 42,  "sat_scale": 1.06, "note": "yellow/gold -> straw gold" },
+      { "lo": 75,  "hi": 170, "hue": 90,  "sat_scale": 0.96, "note": "green -> caatinga green" },
+      { "lo": 170, "hi": 255, "hue": 193, "sat_scale": 0.95, "note": "blue/cyan -> sertao teal (diamond)" },
+      { "lo": 255, "hi": 330, "hue": 322, "sat_scale": 0.85, "note": "purple/magenta -> warm plum" },
+      { "lo": 330, "hi": 360, "hue": 8,   "sat_scale": 1.0,  "note": "pink -> rust" }
+    ],
+    "sat_clamp": [0.05, 0.92],
+    "value_gain": 1.02
+  },
+  "special": {
+    "icons/crown_silver.png": { "force_hue": 33, "force_sat": 0.14, "value_gain": 1.04 },
+    "icons/crown_bronze.png": { "force_hue": 24, "force_sat": 0.72, "value_gain": 0.88 },
+    "icons/crown_gold.png":   { "force_hue": 42, "force_sat": 0.85, "value_gain": 1.08 },
+    "icons/skull_crown_silver.png": { "crown": "icons/crown_silver.png" },
+    "icons/skull_crown_bronze.png": { "crown": "icons/crown_bronze.png" },
+    "icons/skull_crown_gold.png":   { "crown": "icons/crown_gold.png" }
+  },
+  "terrain": {
+    "comment": "Official-client renderer presentation patch (tools/jagunco-renderer-patch.mjs). Pure fill-color swaps on the WebGL batcher - geometry, scale and hitboxes untouched. Caatinga biome: dry olive scrub, warm sand, Sao-Francisco teal river.",
+    "grass": "#b9a86a",
+    "sand": "#d9bd77",
+    "snow": "#f4ead2",
+    "snowTuft": "#eee4cc",
+    "tuftDark": "#6d7c42",
+    "tuftLight": "#8a9450",
+    "treeCanopy": "#5d7a3a",
+    "treeCanopyLight": "#74904a",
+    "river": "#6fae9f",
+    "riverDeep": "#548e84",
+    "riverShallow": "#d3e6dd",
+    "riverFill": "#8fc3b4",
+    "riverHighlight": "#bfe0d6",
+    "pebbleShadow": "#6b6252",
+    "pebbles": ["#948a74", "#9a8f6e", "#7f7663"],
+    "rockDeep": "#6e6252",
+    "rockShadow": "#4e463c",
+    "rockMid": "#847a68",
+    "rockLight": "#978b76",
+    "rockWarm": "#8d8370",
+    "rockInner": "#5a5148",
+    "stoneWall": "#8a8578",
+    "stoneWallInner": "#b3a890",
+    "castleWall": "#7e7568",
+    "castleWallInner": "#9a917f",
+    "woodWall": "#8a6a3a",
+    "woodWallInner": "#b08d4f",
+    "goldOre": "#d9a441",
+    "goldOreLight": "#e8d8b0",
+    "rockOre": "#8a7d68",
+    "rockOreLight": "#a89a80"
+  },
+  "aliases": {
+    "comment": "required file -> source file name when the reference pack uses a different name",
+    "weapons/axe_1_e.png": "weapons/axe_e.png",
+    "weapons/great_axe_1_e.png": "weapons/great_axe_e.png",
+    "weapons/spear_1_e.png": "weapons/spear_e.png",
+    "weapons/sword_1_e.png": "weapons/sword_e.png",
+    "weapons/dagger_1_e.png": "weapons/daggers_1_e.png"
+  }
+}

@@ -113,6 +113,7 @@ export function startGame(canvas: HTMLCanvasElement, onHud: (state: HudState) =>
   let shake = 0;
   let elapsed = 0;
   let lastSnapshotTick = 0;
+  let renderDiagnosticSent = false;
 
   const emit = (): void => {
     onHud({ ...hud, leaders: [...hud.leaders] });
@@ -299,6 +300,9 @@ export function startGame(canvas: HTMLCanvasElement, onHud: (state: HudState) =>
         view.destroy();
         projectiles.delete(id);
       }
+      // A snapshot is also a render tick. This keeps the world visible in
+      // embedded previews that throttle requestAnimationFrame in the background.
+      if (initialized) render();
     },
     private: (data) => { applyPrivate(hud, data); },
     events: handleEvents,
@@ -461,6 +465,17 @@ export function startGame(canvas: HTMLCanvasElement, onHud: (state: HudState) =>
     const sy = shake > 0 ? Math.cos(elapsed * 77) * shake : 0;
     world.position.set(window.innerWidth / 2 - cameraX * scale + sx, window.innerHeight / 2 - cameraY * scale + sy);
     app.render();
+    if (hasServerPosition && !renderDiagnosticSent) {
+      renderDiagnosticSent = true;
+      void fetch("/api/log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          msg: "jagunco-render",
+          ctx: { tick: lastSnapshotTick, players: players.size, objects: objects.size, cameraX, cameraY },
+        }),
+      }).catch(() => undefined);
+    }
     window.__GAME_READY__ = true;
   };
 

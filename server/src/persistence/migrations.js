@@ -223,7 +223,7 @@ export const MIGRATIONS = [
                 seq INT AUTO_INCREMENT PRIMARY KEY,
                 account_id CHAR(24) NOT NULL,
                 at BIGINT NOT NULL,
-                signal VARCHAR(32) NOT NULL,
+                \`signal\` VARCHAR(32) NOT NULL,
                 ord INT NOT NULL DEFAULT 0,
                 KEY ix_mod_flags_account (account_id, ord)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,

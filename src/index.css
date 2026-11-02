@@ -25,7 +25,7 @@ button { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, input:focus-visible { outline: 3px solid #ffd667; outline-offset: 3px; }
 
 #game-root { position: fixed; inset: 0; background: #d9c083; }
-#game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+#game-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; cursor: none; }
 #ui-overlay { position: absolute; inset: 0; pointer-events: none; user-select: none; }
 #ui-overlay > * { pointer-events: auto; }
 kbd { font-family: "Barlow Condensed", sans-serif; }
@@ -59,7 +59,7 @@ h1 span { color: var(--gold); font-size: .48em; letter-spacing: -.02em; }
 .title-footer { position: fixed; bottom: 17px; left: 0; right: 0; text-align: center; color: rgba(255,241,199,.55); font: 600 10px "Barlow Condensed", sans-serif; letter-spacing: .12em; }
 .title-footer span { padding: 0 8px; color: #793127; }
 
-.hud-panel { background: linear-gradient(135deg, rgba(43,33,24,.91),rgba(53,40,28,.82)); border: 1px solid rgba(255,241,199,.2); box-shadow: 0 4px 14px rgba(43,33,24,.2), inset 0 0 0 3px rgba(43,33,24,.16); backdrop-filter: blur(4px); }
+.hud-panel { background: linear-gradient(135deg, rgba(43,33,24,.91),rgba(53,40,28,.82)); border: 1px solid rgba(255,241,199,.2); box-shadow: 0 4px 14px rgba(43,33,24,.2), inset 0 0 0 3px rgba(43,33,24,.16); }
 .status-panel { position: absolute; top: 18px; left: 18px; width: 240px; padding: 13px; border-radius: 4px; }
 .player-line { display: flex; align-items: center; justify-content: space-between; margin-bottom: 9px; }
 .player-line strong { max-width: 140px; overflow: hidden; text-overflow: ellipsis; font: 800 18px "Barlow Condensed", sans-serif; letter-spacing: .04em; }
@@ -115,6 +115,9 @@ h1 span { color: var(--gold); font-size: .48em; letter-spacing: -.02em; }
 .hotbar-slot.selected { border-color: #ffd667; background: linear-gradient(#76542c,#503820); box-shadow: inset 0 0 0 2px rgba(255,214,103,.18); color: #ffd667; }
 .hotbar-slot:disabled { filter: grayscale(1); opacity: .45; cursor: not-allowed; }
 .hotbar-slot > svg { width: 23px; height: 23px; }
+.hotbar-slot .item-icon { width: 34px; height: 28px; object-fit: contain; filter: drop-shadow(0 2px 1px rgba(0,0,0,.35)); pointer-events: none; }
+.hotbar-slot .weapon-icon { width: 43px; }
+.hotbar-slot.selected .item-icon { filter: drop-shadow(0 0 5px rgba(255,214,103,.35)); }
 .hotbar-slot > kbd { position: absolute; top: 3px; left: 5px; color: #9e8b69; font-size: 10px; }
 .hotbar-slot > span { font: 700 9px "Barlow Condensed", sans-serif; letter-spacing: .03em; }
 .hotbar-slot small { display: flex; align-items: center; gap: 2px; color: #bfa66e; font: 600 8px "Barlow Condensed", sans-serif; }

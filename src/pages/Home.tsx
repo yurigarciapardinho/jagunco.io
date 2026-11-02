@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import {
-  Apple, Axe, Coins, Crosshair, Hammer, Heart, Mountain, Pause, Play,
-  Shield, Skull, Sparkles, Swords, TreePine, Volume2, VolumeX, Wind,
+  Apple, Axe, Coins, Heart, Mountain, Pause, Play,
+  Skull, Sparkles, Swords, TreePine, Volume2, VolumeX, Wind,
 } from "lucide-react";
 import { BUILDINGS, WEAPONS } from "@contracts/game";
 import { startGame, stopGame, type GameController } from "@/game/boot";
@@ -29,7 +29,8 @@ export default function Home() {
   };
 
   const inRoom = hud.phase === "playing" || hud.phase === "dead";
-  const buildIcons = [null, Shield, Crosshair, Wind];
+  const weaponArt = ["weapon_machete", "weapon_spear", "weapon_slingshot"];
+  const buildArt = ["", "wall", "spike", "mill_tower"];
 
   return (
     <div id="game-root">
@@ -66,7 +67,7 @@ export default function Home() {
                 <span><kbd>Q</kbd> CURAR</span>
               </div>
             </section>
-            <footer className="title-footer">ARTE VETORIAL ORIGINAL <span>•</span> SERVIDOR AUTORITATIVO <span>•</span> VERSÃO MVP</footer>
+            <footer className="title-footer">BASE VISUAL JAGUNCO <span>•</span> ELEMENTOS CC0 <span>•</span> SERVIDOR AUTORITATIVO</footer>
           </main>
         )}
 
@@ -139,7 +140,7 @@ export default function Home() {
                   title={hud.level < weapon.unlock ? `Desbloqueia no nível ${weapon.unlock}` : weapon.name}
                 >
                   <kbd>{index + 1}</kbd>
-                  {index === 0 ? <Axe /> : index === 1 ? <Swords /> : <Crosshair />}
+                  <img className="item-icon weapon-icon" src={`/art/icons/${weaponArt[index]}.png`} alt="" draggable={false} />
                   <span>{index === 0 ? "FACÃO" : index === 1 ? "LANÇA" : "ESTILINGUE"}</span>
                   {hud.level < weapon.unlock && <small>NÍV. {weapon.unlock}</small>}
                 </button>
@@ -147,7 +148,6 @@ export default function Home() {
               <div className="hotbar-divider" />
               {BUILDINGS.slice(1).map((building, offset) => {
                 const index = offset + 1;
-                const Icon = buildIcons[index]!;
                 return (
                   <button
                     key={building!.kind}
@@ -156,7 +156,7 @@ export default function Home() {
                     title={`${building!.name}: ${building!.cost.wood} madeira + ${building!.cost.stone} pedra`}
                   >
                     <kbd>{["Z", "X", "C"][offset]}</kbd>
-                    <Icon />
+                    <img className="item-icon" src={`/art/icons/${buildArt[index]}.png`} alt="" draggable={false} />
                     <span>{["CERCA", "ARAME", "MOINHO"][offset]}</span>
                     <small><TreePine />{building!.cost.wood} <Mountain />{building!.cost.stone}</small>
                   </button>

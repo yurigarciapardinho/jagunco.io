@@ -7,7 +7,7 @@ export interface GameLoopHooks {
   /** Fixed-step logic update. dt is always STEP (seconds). */
   update: (dt: number) => void;
   /** Render. alpha ∈ [0,1) is the interpolation factor between the previous and current step. */
-  render: (alpha: number) => void;
+  render: (alpha: number, frameDt: number) => void;
 }
 
 export class GameLoop {
@@ -36,7 +36,7 @@ export class GameLoop {
         this.hooks.update(GameLoop.STEP);
         this.acc -= GameLoop.STEP;
       }
-      this.hooks.render(this.acc / GameLoop.STEP);
+      this.hooks.render(this.acc / GameLoop.STEP, delta);
       this.raf = requestAnimationFrame(frame);
     };
     this.raf = requestAnimationFrame(frame);

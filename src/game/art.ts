@@ -1,9 +1,18 @@
-import { Container, Graphics, Text } from "pixi.js";
+import {
+  Assets,
+  Container,
+  Graphics,
+  Sprite,
+  Spritesheet,
+  Text,
+  Texture,
+  TilingSprite,
+} from "pixi.js";
 import { MAP_SIZE, type AnimalKind, type ObjectKind } from "@contracts/game";
 
 export const COLORS = {
-  sand: 0xd9c083,
-  sandDark: 0xc4a868,
+  sand: 0xcfb175,
+  sandDark: 0xb8955e,
   ink: 0x2b2118,
   cream: 0xfff1c7,
   leather: 0x70452d,
@@ -19,33 +28,73 @@ export const COLORS = {
 export interface PlayerView {
   root: Container;
   body: Container;
+  bodyArt: Sprite;
+  bodyScale: number;
+  weapon: Container;
+  weaponArt: Sprite;
+  slash: Sprite;
+  hands: Sprite[];
   hp: Graphics;
   label: Text;
   targetX: number;
   targetY: number;
   targetAim: number;
   swing: number;
+  serverSwing: number;
+  attackTime: number;
+  weaponIndex: number;
+  walk: number;
+  hit: number;
   lastHp: number;
 }
 
 export interface ObjectView {
   root: Container;
+  art: Container;
   hp: Graphics;
   kind: ObjectKind;
+  spinner?: Container;
+  hit: number;
+  phase: number;
 }
 
 export interface AnimalView {
   root: Container;
   body: Container;
+  bodyArt: Sprite;
+  bodyScale: number;
   hp: Graphics;
   targetX: number;
   targetY: number;
   targetAim: number;
+  walk: number;
+  hit: number;
+}
+
+let atlas: Spritesheet | null = null;
+let loading: Promise<void> | null = null;
+
+export function loadArt(): Promise<void> {
+  if (atlas) return Promise.resolve();
+  if (!loading) {
+    loading = Promise.all([
+      Assets.load<Spritesheet>("/art/jagunco-atlas.json"),
+      Assets.load<Texture>("/art/caatinga-ground.png"),
+    ]).then(([sheet]) => {
+      atlas = sheet;
+    });
+  }
+  return loading;
+}
+
+function art(name: string): Sprite {
+  if (!atlas) throw new Error("O atlas visual ainda não foi carregado.");
+  return new Sprite(atlas.textures[name]);
 }
 
 const labelStyle = {
-  fontFamily: "Arial, sans-serif",
-  fontSize: 13,
+  fontFamily: "Barlow Condensed, Arial, sans-serif",
+  fontSize: 15,
   fontWeight: "bold" as const,
   fill: COLORS.cream,
   stroke: { color: COLORS.ink, width: 4 },
@@ -54,150 +103,230 @@ const labelStyle = {
 
 export function createGround(): Container {
   const ground = new Container();
-  const base = new Graphics().rect(0, 0, MAP_SIZE, MAP_SIZE).fill(COLORS.sand);
-  base.rect(-80, -80, MAP_SIZE + 160, 80).fill(0x66513a);
-  base.rect(-80, MAP_SIZE, MAP_SIZE + 160, 80).fill(0x66513a);
-  base.rect(-80, 0, 80, MAP_SIZE).fill(0x66513a);
-  base.rect(MAP_SIZE, 0, 80, MAP_SIZE).fill(0x66513a);
-  ground.addChild(base);
+  const terrain = new TilingSprite({
+    texture: Assets.get<Texture>("/art/caatinga-ground.png"),
+    width: MAP_SIZE,
+    height: MAP_SIZE,
+  });
+  terrain.tileScale.set(1.15);
+  ground.addChild(terrain);
 
-  let seed = 0x1a2b3c4d;
-  const random = () => {
-    seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0;
-    return seed / 4294967296;
-  };
-  const patches = new Graphics();
-  for (let i = 0; i < 260; i++) {
-    const x = random() * MAP_SIZE;
-    const y = random() * MAP_SIZE;
-    const r = 10 + random() * 36;
-    patches.ellipse(x, y, r * 1.8, r).fill({ color: COLORS.sandDark, alpha: 0.18 + random() * 0.12 });
-  }
-  ground.addChild(patches);
-  const tufts = new Graphics();
-  for (let i = 0; i < 420; i++) {
-    const x = 30 + random() * (MAP_SIZE - 60);
-    const y = 30 + random() * (MAP_SIZE - 60);
-    const h = 4 + random() * 7;
-    tufts.moveTo(x - 4, y + 3).lineTo(x, y - h).lineTo(x + 1, y + 3)
-      .moveTo(x + 1, y + 3).lineTo(x + 6, y - h * 0.6)
-      .stroke({ color: 0x8b8a4c, width: 2, alpha: 0.45 });
-  }
-  ground.addChild(tufts);
+  const tracks = new Graphics();
+  tracks.moveTo(-100, MAP_SIZE * 0.69).bezierCurveTo(
+    MAP_SIZE * 0.25, MAP_SIZE * 0.57,
+    MAP_SIZE * 0.61, MAP_SIZE * 0.48,
+    MAP_SIZE + 100, MAP_SIZE * 0.31,
+  ).stroke({ color: 0x9f8358, width: 34, alpha: 0.12 });
+  tracks.moveTo(-100, MAP_SIZE * 0.69 + 42).bezierCurveTo(
+    MAP_SIZE * 0.25, MAP_SIZE * 0.57 + 42,
+    MAP_SIZE * 0.61, MAP_SIZE * 0.48 + 42,
+    MAP_SIZE + 100, MAP_SIZE * 0.31 + 42,
+  ).stroke({ color: 0xead39d, width: 5, alpha: 0.13 });
+  ground.addChild(tracks);
+
+  const border = new Graphics();
+  border.rect(-90, -90, MAP_SIZE + 180, 90).fill(0x594632);
+  border.rect(-90, MAP_SIZE, MAP_SIZE + 180, 90).fill(0x594632);
+  border.rect(-90, 0, 90, MAP_SIZE).fill(0x594632);
+  border.rect(MAP_SIZE, 0, 90, MAP_SIZE).fill(0x594632);
+  border.rect(0, 0, MAP_SIZE, MAP_SIZE).stroke({ color: 0x806341, width: 12 });
+  ground.addChild(border);
   return ground;
 }
 
-export function createPlayer(name: string, local: boolean): PlayerView {
+export function createPlayer(name: string, local: boolean, variant = 0): PlayerView {
   const root = new Container();
-  const shadow = new Graphics().ellipse(0, 19, 30, 14).fill({ color: 0x3a2d20, alpha: 0.24 });
+  const shadow = new Graphics().ellipse(-2, 21, 34, 15).fill({ color: 0x35271d, alpha: 0.25 });
   root.addChild(shadow);
+
   const body = new Container();
-  const shirt = local ? COLORS.teal : COLORS.red;
-  body.addChild(new Graphics()
-    .circle(0, 0, 28).fill(COLORS.leatherDark)
-    .circle(0, 0, 24).fill(shirt)
-    .circle(8, -8, 11).fill(0xd8a66d)
-    .rect(-24, -7, 48, 8).fill(COLORS.leather)
-    .roundRect(-17, -28, 34, 24, 7).fill(COLORS.leather)
-    .rect(-17, -19, 34, 5).fill(COLORS.gold)
-    .moveTo(-12, -28).lineTo(-6, -35).lineTo(0, -28).stroke({ color: COLORS.cream, width: 3 }));
-  const weapon = new Graphics()
-    .roundRect(19, -4, 47, 8, 3).fill(0x5a3825)
-    .poly([58, -9, 79, -3, 63, 6]).fill(0xd9ddd0)
-    .moveTo(62, -6).lineTo(73, -3).stroke({ color: 0xffffff, width: 2, alpha: 0.7 });
-  weapon.pivot.set(20, 0);
-  weapon.position.set(20, 0);
-  body.addChild(weapon);
+  const bodyArt = art(local ? "player_local" : ["player_rust", "player_gold", "player_blue"][variant % 3]);
+  bodyArt.anchor.set(0.5);
+  bodyArt.scale.set(0.72);
+  const handBack = art("hand");
+  handBack.anchor.set(0.5);
+  handBack.scale.set(0.78);
+  handBack.position.set(5, -25);
+  const handFront = art("hand");
+  handFront.anchor.set(0.5);
+  handFront.scale.set(0.78);
+  handFront.position.set(26, 22);
+
+  const weapon = new Container();
+  weapon.position.set(15, 20);
+  const weaponArt = art("weapon_machete");
+  weaponArt.anchor.set(0.1, 0.5);
+  weaponArt.scale.set(0.66);
+  weapon.addChild(weaponArt);
+
+  const slash = art("slash");
+  slash.anchor.set(0.5);
+  slash.position.set(48, 0);
+  slash.scale.set(0.75);
+  slash.visible = false;
+
+  body.addChild(handBack, bodyArt, weapon, handFront, slash);
   root.addChild(body);
   const hp = new Graphics();
-  hp.position.set(-28, -57);
+  hp.position.set(-30, -59);
   root.addChild(hp);
-  const label = new Text({ text: name, style: labelStyle });
+  const label = new Text({ text: name, style: labelStyle, resolution: 2 });
   label.anchor.set(0.5);
-  label.position.set(0, -76);
+  label.position.set(0, -79);
   root.addChild(label);
-  redrawHp(hp, 100, 100, 56);
-  return { root, body, hp, label, targetX: 0, targetY: 0, targetAim: 0, swing: 0, lastHp: 100 };
+  redrawHp(hp, 100, 100, 60);
+  return {
+    root, body, bodyArt, bodyScale: 0.72, weapon, weaponArt, slash,
+    hands: [handBack, handFront], hp, label, targetX: 0, targetY: 0,
+    targetAim: 0, swing: 0, serverSwing: 0, attackTime: 1,
+    weaponIndex: 0, walk: variant * 0.7, hit: 0, lastHp: 100,
+  };
+}
+
+export function setPlayerWeapon(view: PlayerView, index: number): void {
+  if (view.weaponIndex === index) return;
+  view.weaponIndex = index;
+  view.weaponArt.texture = atlas!.textures[["weapon_machete", "weapon_spear", "weapon_slingshot"][index] ?? "weapon_machete"];
+  view.weaponArt.scale.set(index === 1 ? 0.74 : 0.66);
+}
+
+export function triggerAttack(view: PlayerView): void {
+  view.attackTime = 0;
+}
+
+export function animatePlayer(view: PlayerView, dt: number, speed: number): void {
+  const moving = speed > 12;
+  view.walk += dt * (moving ? 11 : 2.2);
+  const bob = moving ? Math.abs(Math.sin(view.walk)) * 2.2 : Math.sin(view.walk) * 0.55;
+  view.bodyArt.y = -bob;
+  const breathe = 1 + Math.sin(view.walk * (moving ? 2 : 1)) * (moving ? 0.016 : 0.007);
+  view.bodyArt.scale.set(view.bodyScale * breathe);
+  view.hands[0]!.y = -25 + (moving ? Math.sin(view.walk) * 3 : 0);
+
+  if (view.attackTime < 1) {
+    const duration = view.weaponIndex === 1 ? 0.46 : view.weaponIndex === 2 ? 0.38 : 0.34;
+    view.attackTime = Math.min(1, view.attackTime + dt / duration);
+    const t = view.attackTime;
+    let angle: number;
+    if (t < 0.2) angle = -0.58 * (t / 0.2);
+    else if (t < 0.58) {
+      const u = (t - 0.2) / 0.38;
+      angle = -0.58 + 1.62 * (1 - (1 - u) * (1 - u));
+    } else angle = 1.04 * (1 - (t - 0.58) / 0.42);
+    view.weapon.rotation = angle;
+    view.weapon.x = 15 + Math.sin(t * Math.PI) * 11;
+    view.slash.visible = view.weaponIndex !== 2 && t > 0.26 && t < 0.64;
+    view.slash.alpha = Math.sin((t - 0.26) / 0.38 * Math.PI) * 0.85;
+    view.slash.rotation = -0.5 + t * 1.8;
+  } else {
+    view.weapon.rotation += (0 - view.weapon.rotation) * Math.min(1, dt * 20);
+    view.weapon.x += (15 - view.weapon.x) * Math.min(1, dt * 20);
+    view.slash.visible = false;
+  }
+
+  view.hit = Math.max(0, view.hit - dt * 7);
+  view.bodyArt.tint = view.hit > 0 ? 0xffb49d : 0xffffff;
 }
 
 export function redrawHp(g: Graphics, value: number, max: number, width: number): void {
   g.clear();
   if (value >= max) return;
-  g.roundRect(0, 0, width, 7, 3).fill({ color: COLORS.ink, alpha: 0.75 });
+  g.roundRect(0, 0, width, 8, 3).fill({ color: COLORS.ink, alpha: 0.82 });
   const ratio = Math.max(0, value / max);
-  g.roundRect(2, 2, Math.max(0, (width - 4) * ratio), 3, 2).fill(ratio > 0.35 ? 0x76b947 : 0xe04f3f);
+  g.roundRect(2, 2, Math.max(0, (width - 4) * ratio), 4, 2).fill(ratio > 0.35 ? 0x82b84e : 0xe04f3f);
+}
+
+function shadow(width: number, height: number): Graphics {
+  return new Graphics().ellipse(0, 10, width, height).fill({ color: 0x3d2d20, alpha: 0.2 });
 }
 
 export function createObject(kind: ObjectKind, radius: number): ObjectView {
   const root = new Container();
-  const g = new Graphics().ellipse(0, radius * 0.55, radius * 0.85, radius * 0.35).fill({ color: 0x493722, alpha: 0.2 });
-  root.addChild(g);
-  const art = new Graphics();
-  if (kind === "tree") {
-    art.roundRect(-9, -4, 18, radius * 0.95, 6).fill(0x674329)
-      .circle(-radius * 0.38, -radius * 0.25, radius * 0.58).fill(COLORS.leaf)
-      .circle(radius * 0.35, -radius * 0.32, radius * 0.62).fill(COLORS.leafLight)
-      .circle(0, -radius * 0.7, radius * 0.65).fill(0x587f42)
-      .circle(-12, -radius * 0.82, radius * 0.23).fill({ color: 0x91a95d, alpha: 0.65 });
-  } else if (kind === "bush") {
-    art.circle(-18, 0, radius * 0.58).fill(COLORS.leaf)
-      .circle(18, 0, radius * 0.58).fill(COLORS.leafLight)
-      .circle(0, -18, radius * 0.68).fill(0x668342);
-    for (const [x, y] of [[-18, -12], [12, -25], [22, 2], [-4, 8]]) art.circle(x, y, 4).fill(0xc45b3f);
-  } else if (kind === "rock" || kind === "gold") {
-    const fill = kind === "gold" ? COLORS.gold : COLORS.rock;
-    art.poly([-radius, radius * 0.35, -radius * 0.72, -radius * 0.55, -radius * 0.15, -radius,
-      radius * 0.62, -radius * 0.65, radius, radius * 0.3, radius * 0.45, radius * 0.65, -radius * 0.55, radius * 0.65]).fill(fill)
-      .poly([-radius * 0.55, -radius * 0.45, -radius * 0.12, -radius * 0.78, radius * 0.35, -radius * 0.55, 0, -radius * 0.2])
-      .fill({ color: kind === "gold" ? 0xffd867 : 0xa7a398, alpha: 0.75 });
-  } else if (kind === "wall") {
-    art.roundRect(-radius, -15, radius * 2, 30, 5).fill(0x69422a)
-      .rect(-radius + 8, -radius * 0.65, 12, radius * 1.1).fill(0x4e3425)
-      .rect(radius - 20, -radius * 0.65, 12, radius * 1.1).fill(0x4e3425)
-      .moveTo(-radius, -5).lineTo(radius, -5).stroke({ color: 0xb78a50, width: 4 });
-  } else if (kind === "spike") {
-    for (let i = -2; i <= 2; i++) {
-      art.moveTo(i * 15 - 12, 20).lineTo(i * 15, -30).lineTo(i * 15 + 12, 20).stroke({ color: 0x5a5a51, width: 5 });
+  root.addChild(shadow(radius * 0.85, radius * 0.3));
+  const container = new Container();
+  let spinner: Container | undefined;
+
+  if (kind === "mill") {
+    const tower = art("mill_tower");
+    tower.anchor.set(0.5);
+    tower.width = radius * 1.45;
+    tower.height = radius * 1.75;
+    tower.y = -10;
+    spinner = new Container();
+    spinner.position.set(0, -radius * 0.55);
+    const blades = art("mill_blades");
+    blades.anchor.set(0.5);
+    blades.width = blades.height = radius * 1.9;
+    spinner.addChild(blades);
+    container.addChild(tower, spinner);
+  } else {
+    const sprite = art(kind);
+    sprite.anchor.set(0.5);
+    if (kind === "tree") {
+      sprite.width = sprite.height = radius * 3.3;
+      sprite.y = -radius * 0.48;
+    } else if (kind === "bush") {
+      sprite.width = sprite.height = radius * 2.25;
+      sprite.y = -radius * 0.2;
+    } else if (kind === "rock" || kind === "gold") {
+      sprite.width = sprite.height = radius * 2.15;
+      sprite.y = -radius * 0.15;
+    } else {
+      sprite.width = radius * 2.3;
+      sprite.height = radius * 1.65;
+      sprite.y = -radius * 0.12;
     }
-    art.moveTo(-radius, 12).lineTo(radius, -12).stroke({ color: 0x3e3d38, width: 4 });
-  } else if (kind === "mill") {
-    art.poly([-24, 38, -15, -25, 15, -25, 24, 38]).fill(0x7a5131)
-      .circle(0, -22, 8).fill(COLORS.leatherDark);
-    for (let i = 0; i < 4; i++) {
-      const a = i * Math.PI / 2;
-      art.moveTo(0, -22).lineTo(Math.cos(a) * 48, -22 + Math.sin(a) * 48).stroke({ color: 0x4b3527, width: 6 });
-      art.circle(Math.cos(a) * 42, -22 + Math.sin(a) * 42, 9).fill(COLORS.cream);
-    }
+    container.addChild(sprite);
   }
-  root.addChild(art);
+
+  root.addChild(container);
   const hp = new Graphics();
-  hp.position.set(-radius, -radius - 22);
+  hp.position.set(-radius, -radius * 1.75 - 15);
   root.addChild(hp);
-  return { root, hp, kind };
+  return { root, art: container, hp, kind, spinner, hit: 0, phase: (radius * 0.37) % 6.28 };
+}
+
+export function animateObject(view: ObjectView, dt: number, elapsed: number): void {
+  if (view.spinner) view.spinner.rotation += dt * 0.62;
+  view.hit = Math.max(0, view.hit - dt * 6);
+  const impact = Math.sin(view.hit * Math.PI) * view.hit;
+  view.art.scale.set(1 + impact * 0.08, 1 - impact * 0.06);
+  if (view.kind === "tree" || view.kind === "bush") {
+    view.art.rotation = Math.sin(elapsed * 0.8 + view.phase) * 0.008 + impact * 0.035;
+  } else view.art.rotation = impact * 0.04;
+  view.art.tint = view.hit > 0.15 ? 0xffd2a4 : 0xffffff;
+}
+
+export function createProjectile(): Sprite {
+  const sprite = art("projectile");
+  sprite.anchor.set(0.5);
+  sprite.scale.set(0.55);
+  return sprite;
 }
 
 export function createAnimal(kind: AnimalKind): AnimalView {
   const root = new Container();
-  root.addChild(new Graphics().ellipse(0, 18, 32, 12).fill({ color: 0x3a2d20, alpha: 0.22 }));
+  root.addChild(shadow(35, 13));
   const body = new Container();
-  const g = new Graphics();
-  if (kind === "goat") {
-    g.ellipse(0, 0, 30, 21).fill(0xe8dfca)
-      .circle(23, -8, 15).fill(0xf5ecd8)
-      .moveTo(22, -20).lineTo(16, -34).lineTo(28, -23).stroke({ color: 0x68513b, width: 4 })
-      .moveTo(31, -19).lineTo(36, -31).lineTo(38, -17).stroke({ color: 0x68513b, width: 4 })
-      .circle(29, -10, 2.5).fill(COLORS.ink);
-  } else {
-    g.ellipse(0, 0, 34, 23).fill(0x574234)
-      .circle(25, -4, 17).fill(0x654a38)
-      .ellipse(37, 2, 10, 7).fill(0xb2866b)
-      .poly([20, -17, 26, -31, 31, -15]).fill(0x3c2d25)
-      .circle(30, -8, 2.5).fill(0xf0c84b);
-  }
-  body.addChild(g);
+  const bodyArt = art(kind);
+  bodyArt.anchor.set(0.5);
+  const scale = kind === "boar" ? 0.57 : 0.5;
+  bodyArt.scale.set(scale);
+  body.addChild(bodyArt);
   root.addChild(body);
   const hp = new Graphics();
-  hp.position.set(-28, -48);
+  hp.position.set(-30, -52);
   root.addChild(hp);
-  return { root, body, hp, targetX: 0, targetY: 0, targetAim: 0 };
+  return {
+    root, body, bodyArt, bodyScale: scale, hp, targetX: 0, targetY: 0,
+    targetAim: 0, walk: 0, hit: 0,
+  };
+}
+
+export function animateAnimal(view: AnimalView, dt: number, speed: number): void {
+  view.walk += dt * (speed > 10 ? 10 : 2);
+  view.bodyArt.y = speed > 10 ? -Math.abs(Math.sin(view.walk)) * 2.5 : Math.sin(view.walk) * 0.5;
+  view.bodyArt.scale.set(view.bodyScale * (1 + Math.sin(view.walk * 2) * (speed > 10 ? 0.025 : 0.006)));
+  view.hit = Math.max(0, view.hit - dt * 7);
+  view.bodyArt.tint = view.hit > 0 ? 0xffa68e : 0xffffff;
 }

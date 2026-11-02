@@ -16,7 +16,8 @@ Ganhe pontos coletando, caçando, construindo e vencendo confrontos. Madeira e p
 - Cabras passivas e porcos-do-mato hostis.
 - PvP, morte, respawn, cura e ranking da sala.
 - Controles por teclado/mouse e joystick/botões de toque.
-- Arte vetorial original, partículas, câmera com impacto e áudio sintetizado.
+- Atlas visual de caatinga com personagens, armas, animais, recursos e construções; animações de caminhada, golpe, impacto e moinho.
+- Partículas, câmera com impacto, mira responsiva e áudio sintetizado.
 
 ## Controles
 
@@ -72,7 +73,7 @@ O primeiro roteiro abre dois clientes reais e cobre movimento, coleta, ranking c
 - **Cliente:** TypeScript, Vite, PixiJS 8/WebGL 2 e React somente para o shell/HUD.
 - **Rede:** WebSocket binário, MessagePack e protocolo versionado.
 - **Servidor:** Node.js, Hono e simulação autoritativa com timestep fixo de 30 Hz.
-- **Sincronização:** snapshots a 15 Hz, predição do jogador local, reconciliação por ACK e interpolação de entidades remotas.
+- **Sincronização:** snapshots a 15 Hz, predição do jogador local, reconciliação por ACK e interpolação temporal de posição e ângulo das entidades remotas.
 - **Desempenho:** spatial hash para AOI e colisões, envio de objetos estáticos por mudança, limites de catch-up e limite de payload.
 - **Determinismo:** geração de mundo e IA usam PRNG com seed; o estado da partida não depende de `Math.random()`.
 
@@ -80,10 +81,10 @@ O servidor valida movimento, alcance, cooldown, dano, recompensas, custos, limit
 
 ## Escopo atual
 
-Este é um vertical slice completo do MVP, não o jogo final. Contas, clãs, amigos, chat, loja, chefes, ranking global, persistência de personagens e WebTransport ficam para etapas posteriores.
+Este é um vertical slice completo com uma base visual própria em evolução, não o jogo final. Contas, clãs, amigos, chat, loja, chefes, ranking global, persistência de personagens e WebTransport ficam para etapas posteriores.
 
 ## Licença e referências
 
 Código e arte deste projeto estão sob WTFPL; veja `LICENSE`. As fontes locais têm licenças próprias registradas em `CREDITS.md` e `public/fonts/OFL.txt`.
 
-Os repositórios `MooMooForge/moomoo-in-depth` e `al007ex/moomoo-clone` foram usados como referência de estudo e padrões de implementação. Jagunco.io não se conecta aos servidores oficiais do Moomoo e não utiliza seus sprites.
+Os repositórios `MooMooForge/moomoo-in-depth`, `al007ex/moomoo-clone` e o pacote `game-elements` foram usados como referência de estudo, padrões de implementação e elementos visuais CC0. Os sprites de cabra e porco-do-mato foram adaptados do pacote CC0; personagens, armas, recursos, construções e terreno foram desenhados para o Jagunco. Jagunco.io não se conecta aos servidores oficiais do Moomoo.

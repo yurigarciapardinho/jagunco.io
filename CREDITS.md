@@ -2,7 +2,9 @@
 
 ## Arte e áudio
 
-Personagens, recursos, animais, construções, terreno, partículas e interface foram criados para Jagunco.io com gráficos vetoriais e Web Audio. Nenhum sprite ou arquivo de áudio do Moomoo foi incorporado.
+Personagens, armas, recursos, construções, terreno, partículas e interface foram desenhados para Jagunco.io. O atlas e o terreno são gerados localmente e servidos como arquivos próprios do jogo; os efeitos sonoros usam Web Audio.
+
+Os sprites de cabra (`sheep_1.png`) e porco-do-mato (`boar_1.png`) foram adaptados do pacote `al007ex/moomoo-clone`, fornecido pelo usuário sob **CC0 1.0 Universal**. O pacote `game-elements`, também fornecido sob **CC0 1.0 Universal**, foi estudado como referência de formas, enquadramento e composição de sprites. As licenças estão preservadas nos materiais de origem.
 
 ## Fontes locais
 

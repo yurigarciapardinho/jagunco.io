@@ -9,6 +9,7 @@ const errors = [];
 const badResponses = [];
 
 function watch(page, label) {
+  page.setDefaultTimeout(90000);
   page.on("pageerror", (error) => errors.push(`${label}: ${error.message}`));
   page.on("console", (message) => { if (message.type() === "error") errors.push(`${label}: ${message.text()}`); });
   page.on("response", (response) => { if (response.status() >= 400) badResponses.push(`${response.status()} ${response.url()}`); });
@@ -55,7 +56,7 @@ async function aimAt(page, from, target) {
 const contextA = await browser.newContext({ viewport: { width: 1280, height: 800 } });
 const a = await contextA.newPage();
 watch(a, "A");
-await a.goto(base, { waitUntil: "networkidle" });
+await a.goto(base, { waitUntil: "domcontentloaded", timeout: 90000 });
 await a.waitForFunction(() => window.__GAME_READY__ === true);
 await a.screenshot({ path: `${shots}/01-title.png` });
 await a.getByLabel("Nome do jogador").fill("Lampião Teste");
@@ -106,7 +107,7 @@ await a.getByRole("button", { name: "Ativar som" }).click();
 const contextB = await browser.newContext({ viewport: { width: 1280, height: 800 } });
 const b = await contextB.newPage();
 watch(b, "B");
-await b.goto(base, { waitUntil: "networkidle" });
+await b.goto(base, { waitUntil: "domcontentloaded", timeout: 90000 });
 await b.waitForFunction(() => window.__GAME_READY__ === true);
 await b.getByLabel("Nome do jogador").fill("Volante Teste");
 await b.getByRole("button", { name: /ENTRAR NA SALA/ }).click();

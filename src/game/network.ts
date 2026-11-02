@@ -47,7 +47,6 @@ export class GameConnection {
   private httpToken: string | null = null;
   private httpQueue: ClientMessage[] = [];
   private httpInFlight = false;
-  private diagnosticReports = 0;
 
   constructor(private readonly handlers: NetworkHandlers) {}
 
@@ -56,7 +55,6 @@ export class GameConnection {
     this.intentionalClose = false;
     this.receivedWelcome = false;
     this.serverRejected = false;
-    this.diagnosticReports = 0;
     const generation = this.generation;
     const protocol = location.protocol === "https:" ? "wss:" : "ws:";
     const socket = new WebSocket(`${protocol}//${location.host}/api/game/ws`);
@@ -143,7 +141,6 @@ export class GameConnection {
         return;
       }
       this.httpToken = data.token;
-      this.reportMessages("join", data.messages);
       this.startPing();
       this.httpTimer = setInterval(() => void this.syncHttp(generation), 70);
       for (const message of data.messages) this.dispatch(message);
@@ -168,7 +165,6 @@ export class GameConnection {
       if (!response.ok) throw new Error("sync failed");
       const data = await response.json() as HttpSyncResponse;
       if (generation !== this.generation || this.intentionalClose) return;
-      this.reportMessages("sync", data.messages);
       for (const message of data.messages) this.dispatch(message);
     } catch {
       if (generation !== this.generation || this.intentionalClose) return;
@@ -190,24 +186,6 @@ export class GameConnection {
     } catch {
       // The server also expires idle HTTP sessions.
     }
-  }
-
-  private reportMessages(stage: "join" | "sync", messages: ServerMessage[]): void {
-    if (this.diagnosticReports >= 3) return;
-    this.diagnosticReports++;
-    const snapshots = messages.flatMap((message) => message[0] === "s" ? [{
-      players: message[1].players.length,
-      objects: message[1].objects.length,
-      animals: message[1].animals.length,
-    }] : []);
-    void fetch("/api/log", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        msg: "jagunco-network",
-        ctx: { stage, types: messages.map((message) => message[0]), snapshots },
-      }),
-    }).catch(() => undefined);
   }
 
   private startPing(): void {

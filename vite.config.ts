@@ -4,12 +4,22 @@ const __dirname = import.meta.dirname
 import react from "@vitejs/plugin-react"
 import { defineConfig } from "vite"
 import gameBuildOutput from "./scripts/build-output"
+import { attachGameServer } from "./api/game/server"
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     devServer({ entry: "api/boot.ts", exclude: [/^\/(?!api\/).*$/] }),
-    react(), gameBuildOutput()],
+    react(), gameBuildOutput(),
+    {
+      name: "jagunco-websocket",
+      configureServer(server) {
+        if (!server.httpServer) return
+        const game = attachGameServer(server.httpServer)
+        server.httpServer.once("close", () => game.dispose())
+      },
+    },
+  ],
   server: {
     port: 3000,
   },

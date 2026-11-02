@@ -55,9 +55,12 @@ export class Input {
     };
 
     on<KeyboardEvent>(window, "keydown", (e) => {
+      const element = e.target as HTMLElement | null;
+      if (element?.matches("input, textarea, [contenteditable=true]")) return;
+      if (KEYMAP[e.code] || e.code === "Space" || e.code.startsWith("Arrow")) e.preventDefault();
       if (e.repeat) return;
       const m = KEYMAP[e.code];
-      if (m) this.held.add(e.code);
+      if (m || e.code === "Space" || e.code === "KeyE") this.held.add(e.code);
       this.actions.add(e.code); // e.g. "KeyE" / "Escape" / "Space" are consumed directly by code
       this.recomputeAxes();
     });
@@ -148,6 +151,10 @@ export class Input {
     }
     this.moveX = clamp(x, -1, 1);
     this.moveZ = clamp(z, -1, 1);
+  }
+
+  isDown(code: string): boolean {
+    return this.held.has(code);
   }
 
   /** Consume the camera delta before each frame render (take and zero it). */

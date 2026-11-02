@@ -247,6 +247,6 @@ export const reportLog = mysqlTable("report_log", {
 
 // Idempotency markers for the one-shot JSON -> MySQL import.
 export const migrationMeta = mysqlTable("migration_meta", {
-    mkey: varchar("mkey", { length: 32 }).primaryKey(),
+    mkey: varchar("mkey", { length: 64 }).primaryKey(),
     doneAt: bigint("done_at", { mode: "number" }).notNull()
 });

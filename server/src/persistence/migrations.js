@@ -242,7 +242,7 @@ export const MIGRATIONS = [
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
             `CREATE TABLE IF NOT EXISTS migration_meta (
-                mkey VARCHAR(32) PRIMARY KEY,
+                mkey VARCHAR(64) PRIMARY KEY,
                 done_at BIGINT NOT NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
         ]
@@ -268,5 +268,11 @@ export const MIGRATIONS = [
             await pool.query(`ALTER TABLE accounts DROP COLUMN password_credential`);
             await pool.query(`ALTER TABLE accounts CHANGE password_credential_v password_credential VARCHAR(512) NULL`);
         }
+    },
+    {
+        name: "0003_migration_meta_key_width",
+        statements: [
+            `ALTER TABLE migration_meta MODIFY mkey VARCHAR(64) PRIMARY KEY`
+        ]
     }
 ];

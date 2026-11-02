@@ -8,7 +8,7 @@ import {
   Texture,
   TilingSprite,
 } from "pixi.js";
-import { MAP_SIZE, type AnimalKind, type ObjectKind } from "@contracts/game";
+import { MAP_SIZE, type AnimalKind, type ObjectKind, type ShopItemId } from "@contracts/game";
 
 export const COLORS = {
   sand: 0xcfb175,
@@ -43,6 +43,8 @@ export interface PlayerView {
   serverSwing: number;
   attackTime: number;
   weaponIndex: number;
+  equipment: Container;
+  equipmentKey: string;
   walk: number;
   hit: number;
   lastHp: number;
@@ -159,13 +161,15 @@ export function createPlayer(name: string, local: boolean, variant = 0): PlayerV
   weaponArt.scale.set(0.66);
   weapon.addChild(weaponArt);
 
+  const equipment = new Container();
+
   const slash = art("slash");
   slash.anchor.set(0.5);
   slash.position.set(48, 0);
   slash.scale.set(0.75);
   slash.visible = false;
 
-  body.addChild(handBack, bodyArt, weapon, handFront, slash);
+  body.addChild(handBack, bodyArt, equipment, weapon, handFront, slash);
   root.addChild(body);
   const hp = new Graphics();
   hp.position.set(-30, -59);
@@ -179,7 +183,7 @@ export function createPlayer(name: string, local: boolean, variant = 0): PlayerV
     root, body, bodyArt, bodyScale: 0.72, weapon, weaponArt, slash,
     hands: [handBack, handFront], hp, label, targetX: 0, targetY: 0,
     targetAim: 0, swing: 0, serverSwing: 0, attackTime: 1,
-    weaponIndex: 0, walk: variant * 0.7, hit: 0, lastHp: 100,
+    weaponIndex: 0, equipment, equipmentKey: "|", walk: variant * 0.7, hit: 0, lastHp: 100,
   };
 }
 
@@ -188,6 +192,39 @@ export function setPlayerWeapon(view: PlayerView, index: number): void {
   view.weaponIndex = index;
   view.weaponArt.texture = atlas!.textures[["weapon_machete", "weapon_spear", "weapon_slingshot"][index] ?? "weapon_machete"];
   view.weaponArt.scale.set(index === 1 ? 0.74 : 0.66);
+}
+
+export function setPlayerEquipment(view: PlayerView, hat: ShopItemId | null, accessory: ShopItemId | null): void {
+  const key = `${hat ?? ""}|${accessory ?? ""}`;
+  if (view.equipmentKey === key) return;
+  view.equipmentKey = key;
+  for (const child of view.equipment.removeChildren()) child.destroy({ children: true });
+  if (hat) {
+    const leather = hat === "leatherHat";
+    const graphic = new Graphics()
+      .ellipse(0, -28, 29, 9).fill(leather ? 0x4b3022 : 0xd6ad55)
+      .ellipse(0, -27, 29, 9).stroke({ color: leather ? 0x2f2119 : 0x8b6530, width: 2 })
+      .roundRect(-15, -47, 30, 21, 7).fill(leather ? 0x70452d : 0xe2bd68)
+      .rect(-15, -33, 30, 6).fill(leather ? 0x3c2a20 : 0x9b5934);
+    view.equipment.addChild(graphic);
+  }
+  if (accessory === "boots") {
+    view.equipment.addChild(new Graphics()
+      .roundRect(-22, 20, 16, 16, 4).fill(0x4b3022)
+      .roundRect(7, 20, 16, 16, 4).fill(0x4b3022)
+      .rect(-22, 20, 16, 4).fill(0x9b6a3d)
+      .rect(7, 20, 16, 4).fill(0x9b6a3d));
+  } else if (accessory === "bandolier") {
+    const strap = new Graphics().roundRect(-5, -34, 10, 66, 3).fill(0x5a3525)
+      .rect(-5, -19, 10, 4).fill(0xd0a550).rect(-5, -5, 10, 4).fill(0xd0a550)
+      .rect(-5, 9, 10, 4).fill(0xd0a550);
+    strap.rotation = -0.55;
+    view.equipment.addChild(strap);
+  } else if (accessory === "patua") {
+    view.equipment.addChild(new Graphics()
+      .moveTo(-13, -24).quadraticCurveTo(0, -2, 13, -24).stroke({ color: 0x3c2a20, width: 3 })
+      .circle(0, -5, 7).fill(0x287a70).circle(0, -5, 7).stroke({ color: 0xe3ac32, width: 2 }));
+  }
 }
 
 export function triggerAttack(view: PlayerView): void {

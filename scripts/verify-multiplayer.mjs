@@ -64,6 +64,18 @@ await a.getByRole("button", { name: /ENTRAR NA SALA/ }).click();
 await a.locator(".status-panel").waitFor({ timeout: 10000 });
 await a.waitForTimeout(600);
 
+// The ranged branch is locked until its level-three choice, and the shop
+// communicates authoritative gold requirements instead of faking a purchase.
+if (!(await a.locator(".hotbar-slot").nth(2).isDisabled())) throw new Error("Slingshot started unlocked");
+await a.getByTestId("shop-button").click();
+await a.getByTestId("shop-panel").waitFor();
+if (await a.getByTestId("shop-panel").getByText("100", { exact: true }).count() < 1) throw new Error("Shop price missing");
+await a.screenshot({ path: `${shots}/02-shop.png` });
+await a.getByTestId("shop-item-strawHat").click();
+await a.waitForFunction(() => document.querySelector(".notice")?.textContent?.includes("Faltam 100"), null, { timeout: 5000 });
+await a.keyboard.press("KeyB");
+await a.getByTestId("shop-panel").waitFor({ state: "hidden" });
+
 const beforeW = await pos(a);
 await a.keyboard.down("KeyW");
 await a.waitForTimeout(350);
@@ -79,7 +91,7 @@ if (!beforeD || !afterD || afterD.x <= beforeD.x + 5) throw new Error(`D mapping
 await a.screenshot({ path: `${shots}/02-gameplay.png` });
 
 // Gather from the deterministic starter tree west of the map center.
-await moveTo(a, { x: 3200 - 285, y: 3200 - 90 }, 55);
+await moveTo(a, { x: 3200 - 260, y: 3200 - 90 }, 30);
 let gatherPos = await pos(a);
 await aimAt(a, gatherPos, { x: 3200 - 185, y: 3200 - 90 });
 const woodBefore = await a.locator(".resource-grid > div").first().locator("b").textContent();
@@ -133,7 +145,7 @@ await a.getByText("VOCÊ CAIU NO SERTÃO").waitFor({ timeout: 8000 });
 await a.screenshot({ path: `${shots}/05-death.png` });
 await a.getByRole("button", { name: /VOLTAR AO SERTÃO/ }).click();
 await a.locator(".status-panel").waitFor();
-await a.waitForTimeout(500);
+await a.waitForFunction(() => Number(document.querySelector(".health-row b")?.textContent) === 100, null, { timeout: 10000 });
 if (await a.getByText("VOCÊ CAIU NO SERTÃO").count()) throw new Error("Respawn did not clear death state");
 
 const health = await a.locator(".health-row b").textContent();

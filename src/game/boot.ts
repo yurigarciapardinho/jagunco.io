@@ -10,6 +10,8 @@ import {
   type GameEvent,
   type InputState,
   type ObjectNet,
+  type ShopItemId,
+  type UpgradeId,
 } from "@contracts/game";
 import { GameLoop } from "./engine";
 import { Input } from "./input";
@@ -29,6 +31,7 @@ import {
   loadArt,
   redrawHp,
   setPlayerWeapon,
+  setPlayerEquipment,
   triggerAttack,
   type AnimalView,
   type ObjectView,
@@ -46,7 +49,10 @@ export interface GameController {
   join(name?: string): void;
   setName(name: string): void;
   respawn(): void;
-  upgrade(kind: "damage" | "speed" | "gather"): void;
+  upgrade(kind: UpgradeId): void;
+  buyItem(item: ShopItemId): void;
+  equipItem(item: ShopItemId): void;
+  toggleShop(): void;
   selectWeapon(index: number): void;
   selectBuild(index: number): void;
   heal(): void;
@@ -181,6 +187,7 @@ export function startGame(canvas: HTMLCanvasElement, onHud: (state: HudState) =>
           const killer = players.get(event.by ?? -1)?.label.text;
           hud.deathBy = killer ? `Derrubado por ${killer}` : "O sertão venceu desta vez";
           hud.phase = "dead";
+          hud.shopOpen = false;
           audio.sfx("lose");
           emit();
         }
@@ -220,6 +227,7 @@ export function startGame(canvas: HTMLCanvasElement, onHud: (state: HudState) =>
         view.swing = p.swing;
         if (p.flash > 0.2) view.hit = Math.max(view.hit, p.flash);
         setPlayerWeapon(view, p.weapon);
+        setPlayerEquipment(view, p.equippedHat, p.equippedAccessory);
         if (view.lastHp !== p.hp) {
           redrawHp(view.hp, p.hp, p.maxHp, 56);
           view.lastHp = p.hp;
@@ -378,13 +386,25 @@ export function startGame(canvas: HTMLCanvasElement, onHud: (state: HudState) =>
     pending.length = 0;
   };
 
+  const toggleShop = (): void => {
+    if (hud.phase !== "playing") return;
+    hud.shopOpen = !hud.shopOpen;
+    attackHeld = false;
+    if (hud.shopOpen) stopServerInput();
+    emit();
+  };
+
   const update = (dt: number): void => {
     elapsed += dt;
     if (input.consumeAction("Escape") && (hud.phase === "playing" || hud.paused)) {
-      hud.paused = !hud.paused;
-      if (hud.paused) stopServerInput();
+      if (hud.shopOpen) hud.shopOpen = false;
+      else {
+        hud.paused = !hud.paused;
+        if (hud.paused) stopServerInput();
+      }
       emit();
     }
+    if (input.consumeAction("KeyB")) toggleShop();
     if (input.consumeAction("KeyM")) {
       hud.muted = audio.toggleMute();
       emit();
@@ -408,7 +428,7 @@ export function startGame(canvas: HTMLCanvasElement, onHud: (state: HudState) =>
     if (input.consumeAction("KeyC")) { selectedBuild = 3; hud.build = 3; }
     if (input.consumeAction("KeyQ")) healRequested = true;
 
-    const canMove = hud.phase === "playing" && !hud.paused && hasServerPosition;
+    const canMove = hud.phase === "playing" && !hud.paused && !hud.shopOpen && hasServerPosition;
     if (canMove) {
       // Mouse and touch both aim at the actual pointer. Never switch to relative
       // mouse deltas while attacking: that mode switch caused visible weapon snaps.
@@ -511,7 +531,7 @@ export function startGame(canvas: HTMLCanvasElement, onHud: (state: HudState) =>
     const sy = shake > 0 ? Math.cos(elapsed * 77) * shake : 0;
     world.position.set(window.innerWidth / 2 - cameraX * scale + sx, window.innerHeight / 2 - cameraY * scale + sy);
     reticle.position.set(mouseX, mouseY);
-    reticle.visible = !coarsePointer && hud.phase === "playing" && !hud.paused;
+    reticle.visible = !coarsePointer && hud.phase === "playing" && !hud.paused && !hud.shopOpen;
     app.render();
     window.__GAME_READY__ = true;
   };
@@ -578,6 +598,9 @@ export function startGame(canvas: HTMLCanvasElement, onHud: (state: HudState) =>
       emit();
     },
     upgrade: (kind) => connection.send(["u", kind]),
+    buyItem: (item) => connection.send(["b", item]),
+    equipItem: (item) => connection.send(["q", item]),
+    toggleShop,
     selectWeapon: (index) => { selectedWeapon = clamp(index, 0, WEAPONS.length - 1); },
     selectBuild: (index) => {
       selectedBuild = hud.build === index ? 0 : clamp(index, 0, BUILDINGS.length - 1);

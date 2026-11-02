@@ -10,10 +10,11 @@ Ganhe pontos coletando, caçando, construindo e vencendo confrontos. Madeira e p
 
 - Sala pública real para até 40 jogadores, sem cadastro.
 - Madeira, comida, pedra e ouro; recursos naturais renascem.
-- Facão, lança e estilingue com alcance, dano, cooldown e desbloqueio próprios.
-- XP, níveis e melhorias de dano, velocidade e coleta.
+- Facão, lança e estilingue com alcance, dano e cooldown próprios; armas avançadas entram por escolhas de ramificação.
+- XP e escolhas de nível para armas, dano, velocidade, coleta e vida máxima.
+- Loja autoritativa com cinco equipamentos comprados com ouro, bônus reais e troca gratuita após a compra.
 - Cercas, arame farpado e moinhos com custo, vida e limites por jogador.
-- Cabras passivas e porcos-do-mato hostis.
+- Cabras que reagem e fogem de jogadores; porcos-do-mato que perseguem e atacam.
 - PvP, morte, respawn, cura e ranking da sala.
 - Controles por teclado/mouse e joystick/botões de toque.
 - Atlas visual de caatinga com personagens, armas, animais, recursos e construções; animações de caminhada, golpe, impacto e moinho.
@@ -28,6 +29,7 @@ Ganhe pontos coletando, caçando, construindo e vencendo confrontos. Madeira e p
 | Atacar | Espaço, E, botão esquerdo ou ATACAR no toque |
 | Armas | 1, 2 e 3 |
 | Construir | Z (cerca), X (arame), C (moinho) |
+| Loja e equipamentos | B ou botão da loja |
 | Curar | Q; consome 10 comidas e recupera 35 de vida |
 | Pausar localmente | Esc; a sala multiplayer continua ativa |
 | Silenciar | M ou botão de áudio |
@@ -66,7 +68,7 @@ npm run verify:multiplayer
 npm run verify:protocol
 ```
 
-O primeiro roteiro abre dois clientes reais e cobre movimento, coleta, ranking compartilhado, pausa, PvP, morte e respawn. O segundo testa pacotes inválidos, flood e payload excessivo somente contra a infraestrutura local do Jagunco.
+O primeiro roteiro abre dois clientes reais e cobre loja, bloqueio inicial de armas, movimento, coleta, ranking compartilhado, pausa, PvP, morte e respawn. O segundo testa pacotes inválidos, flood e payload excessivo somente contra a infraestrutura local do Jagunco.
 
 ## Arquitetura
 
@@ -77,11 +79,11 @@ O primeiro roteiro abre dois clientes reais e cobre movimento, coleta, ranking c
 - **Desempenho:** spatial hash para AOI e colisões, envio de objetos estáticos por mudança, limites de catch-up e limite de payload.
 - **Determinismo:** geração de mundo e IA usam PRNG com seed; o estado da partida não depende de `Math.random()`.
 
-O servidor valida movimento, alcance, cooldown, dano, recompensas, custos, limites de construção, upgrades, cura e respawn. Limites de taxa e de protocolo reduzem abuso, mas não tornam toda trapaça impossível.
+O servidor valida movimento, alcance, cooldown, dano, recompensas, custos, limites de construção, escolhas de nível, preços, propriedade, equipamento, bônus, cura e respawn. Limites de taxa e de protocolo reduzem abuso, mas não tornam toda trapaça impossível.
 
 ## Escopo atual
 
-Este é um vertical slice completo com uma base visual própria em evolução, não o jogo final. Contas, clãs, amigos, chat, loja, chefes, ranking global, persistência de personagens e WebTransport ficam para etapas posteriores.
+Este é um vertical slice completo com uma base visual própria em evolução, não o jogo final. Contas, clãs, amigos, chat, chefes, ranking global, persistência de personagens entre sessões e WebTransport ficam para etapas posteriores. Itens e desbloqueios sobrevivem ao respawn, mas a sala em memória é reiniciada com o processo.
 
 ## Licença e referências
 

@@ -128,6 +128,34 @@ h1 span { color: var(--gold); font-size: .48em; letter-spacing: -.02em; }
 .desktop-hint span { display: flex; gap: 4px; }
 .mobile-actions { display: none; }
 
+.icon-button.active { border-color: var(--gold); color: var(--gold); background: #5b422e; }
+.upgrades > p { margin: 3px 4px 7px; color: #9f8d6b; font: 500 9px "Inter", sans-serif; }
+.upgrades button:disabled { opacity: .45; cursor: default; }
+.shop-panel { position: absolute; top: 50%; left: 50%; width: min(660px,calc(100vw - 30px)); max-height: min(690px,calc(100vh - 36px)); padding: 16px; overflow-y: auto; transform: translate(-50%,-50%); box-shadow: 0 22px 70px rgba(25,17,12,.55); }
+.shop-panel > header { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,241,199,.13); color: var(--gold); }
+.shop-panel > header > span { display: flex; flex-direction: column; font: 800 18px "Barlow Condensed",sans-serif; letter-spacing: .08em; }
+.shop-panel > header small { color: #9f8d6b; font: 500 9px "Inter",sans-serif; letter-spacing: 0; }
+.shop-panel > header > button { width: 32px; height: 32px; display: grid; place-items: center; margin-left: auto; border: 0; background: transparent; color: #baa77f; cursor: pointer; }
+.shop-panel > header > button svg { width: 19px; }
+.shop-balance { display: flex; align-items: center; justify-content: space-between; padding: 12px 3px; color: #a99672; font: 700 10px "Barlow Condensed",sans-serif; letter-spacing: .1em; }
+.shop-balance b { display: flex; align-items: center; gap: 5px; color: #ffd667; font-size: 19px; }
+.shop-balance svg, .shop-item-action svg { width: 15px; height: 15px; }
+.shop-grid { display: grid; gap: 6px; }
+.shop-item { display: grid; grid-template-columns: 46px 1fr auto; align-items: center; gap: 10px; min-height: 68px; padding: 9px 12px; border: 1px solid rgba(255,241,199,.13); border-radius: 3px; background: rgba(255,241,199,.035); color: var(--cream); text-align: left; cursor: pointer; }
+.shop-item:hover { border-color: #b98c42; background: rgba(227,172,50,.09); }
+.shop-item.equipped { border-color: #c69a45; background: rgba(227,172,50,.11); }
+.shop-item.unaffordable:not(.equipped) { opacity: .62; }
+.shop-item-icon { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 50%; background: rgba(227,172,50,.1); color: #d8b66a; }
+.shop-item-icon svg { width: 21px; }
+.shop-item-copy { display: flex; flex-direction: column; gap: 1px; }
+.shop-item-copy > small { color: #8f7c5e; font: 700 8px "Barlow Condensed",sans-serif; letter-spacing: .12em; }
+.shop-item-copy > strong { font: 700 15px "Barlow Condensed",sans-serif; }
+.shop-item-copy > span { color: #b5a17b; font-size: 10px; }
+.shop-item-action { display: flex; align-items: center; gap: 4px; color: #ffd667; font: 700 13px "Barlow Condensed",sans-serif; }
+.shop-item.equipped .shop-item-action { color: #8fc77b; }
+.shop-panel > footer { margin-top: 12px; color: #8f7c5e; text-align: center; font: 600 9px "Barlow Condensed",sans-serif; letter-spacing: .07em; }
+.shop-panel > footer kbd { color: #d8b66a; }
+
 .modal-screen { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(35,26,19,.7); backdrop-filter: blur(5px); text-align: center; }
 .modal-screen h2 { margin: 8px 0; color: var(--cream); font: 800 34px "Barlow Condensed", sans-serif; letter-spacing: .06em; }
 .modal-screen p { color: #c3ae83; font-size: 13px; }
@@ -168,6 +196,12 @@ h1 span { color: var(--gold); font-size: .48em; letter-spacing: -.02em; }
   .ping-indicator { display: none; }
   .notice { top: auto; bottom: 169px; max-width: 80vw; font-size: 11px; }
   .upgrades { left: 8px; bottom: 155px; width: 188px; }
+  .shop-panel { padding: 11px; max-height: calc(100vh - 20px); }
+  .shop-panel > header > span { font-size: 16px; }
+  .shop-item { grid-template-columns: 35px 1fr auto; min-height: 58px; padding: 7px; gap: 7px; }
+  .shop-item-icon { width: 34px; height: 34px; }
+  .shop-item-copy > strong { font-size: 13px; }
+  .shop-item-copy > span { font-size: 9px; }
   .hotbar { bottom: 8px; max-width: calc(100vw - 12px); gap: 3px; padding: 4px; overflow-x: auto; transform: translateX(-50%); }
   .hotbar-slot { flex: 0 0 46px; width: 46px; height: 52px; }
   .hotbar-slot > svg { width: 18px; height: 18px; }

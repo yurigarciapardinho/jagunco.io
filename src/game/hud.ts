@@ -1,4 +1,4 @@
-import type { LeaderNet, PrivateNet } from "@contracts/game";
+import type { LeaderNet, PrivateNet, ShopItemId, UpgradeId } from "@contracts/game";
 
 export type GamePhase = "title" | "connecting" | "playing" | "dead" | "error";
 
@@ -20,6 +20,12 @@ export interface HudState {
   damageMult: number;
   speedMult: number;
   gatherMult: number;
+  unlockedWeapons: number[];
+  upgrades: UpgradeId[];
+  ownedItems: ShopItemId[];
+  equippedHat: ShopItemId | null;
+  equippedAccessory: ShopItemId | null;
+  shopOpen: boolean;
   weapon: number;
   build: number;
   leaders: LeaderNet[];
@@ -48,6 +54,12 @@ export const initialHud: HudState = {
   damageMult: 1,
   speedMult: 1,
   gatherMult: 1,
+  unlockedWeapons: [0],
+  upgrades: [],
+  ownedItems: [],
+  equippedHat: null,
+  equippedAccessory: null,
+  shopOpen: false,
   weapon: 0,
   build: 0,
   leaders: [],
@@ -70,4 +82,9 @@ export function applyPrivate(hud: HudState, data: PrivateNet): void {
   hud.damageMult = data.damageMult;
   hud.speedMult = data.speedMult;
   hud.gatherMult = data.gatherMult;
+  hud.unlockedWeapons = data.unlockedWeapons;
+  hud.upgrades = data.upgrades;
+  hud.ownedItems = data.ownedItems;
+  hud.equippedHat = data.equippedHat;
+  hud.equippedAccessory = data.equippedAccessory;
 }

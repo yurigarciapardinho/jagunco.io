@@ -11,6 +11,41 @@ export const MAX_INPUT_BYTES = 2048;
 export type ResourceKind = "wood" | "food" | "stone" | "gold";
 export type ObjectKind = "tree" | "bush" | "rock" | "gold" | "wall" | "spike" | "mill";
 export type AnimalKind = "goat" | "boar";
+export type UpgradeId = "spear" | "slingshot" | "damage" | "speed" | "gather" | "vitality";
+export type ShopItemId = "strawHat" | "leatherHat" | "boots" | "bandolier" | "patua";
+export type EquipmentSlot = "hat" | "accessory";
+
+export const UPGRADES: Record<UpgradeId, { name: string; description: string }> = {
+  spear: { name: "Lança de vaqueiro", description: "Desbloqueia alcance e dano superiores" },
+  slingshot: { name: "Estilingue", description: "Desbloqueia ataque à distância" },
+  damage: { name: "Mão pesada", description: "+15% de dano com qualquer arma" },
+  speed: { name: "Pé ligeiro", description: "+10% de velocidade de movimento" },
+  gather: { name: "Mão de obra", description: "+20% de recursos por golpe" },
+  vitality: { name: "Sangue de barro", description: "+20 de vida máxima" },
+};
+
+export function upgradeChoices(level: number): UpgradeId[] {
+  if (level === 2) return ["spear", "damage", "gather"];
+  if (level === 3) return ["slingshot", "speed", "vitality"];
+  const choices: UpgradeId[][] = [
+    ["damage", "speed", "gather"],
+    ["vitality", "damage", "speed"],
+    ["gather", "damage", "vitality"],
+  ];
+  return choices[(Math.max(4, level) - 4) % choices.length];
+}
+
+export const SHOP_ITEMS = [
+  { id: "strawHat", name: "Chapéu de palha", slot: "hat", price: 100, description: "+20% de coleta", gather: 1.2, damage: 1, speed: 1, maxHp: 0, regen: 0 },
+  { id: "leatherHat", name: "Chapéu de couro", slot: "hat", price: 250, description: "+25 de vida máxima", maxHp: 25, gather: 1, damage: 1, speed: 1, regen: 0 },
+  { id: "boots", name: "Botas de vaqueiro", slot: "accessory", price: 180, description: "+12% de velocidade", speed: 1.12, gather: 1, damage: 1, maxHp: 0, regen: 0 },
+  { id: "bandolier", name: "Bandoleira", slot: "accessory", price: 300, description: "+18% de dano", damage: 1.18, gather: 1, speed: 1, maxHp: 0, regen: 0 },
+  { id: "patua", name: "Patuá do sertão", slot: "accessory", price: 400, description: "Regenera 1,2 de vida por segundo", regen: 1.2, gather: 1, damage: 1, speed: 1, maxHp: 0 },
+] as const;
+
+export function shopItem(id: ShopItemId) {
+  return SHOP_ITEMS.find((item) => item.id === id);
+}
 
 export interface InputState {
   seq: number;
@@ -40,6 +75,8 @@ export interface PlayerNet {
   alive: boolean;
   swing: number;
   flash: number;
+  equippedHat: ShopItemId | null;
+  equippedAccessory: ShopItemId | null;
 }
 
 export interface ObjectNet {
@@ -86,6 +123,11 @@ export interface PrivateNet {
   damageMult: number;
   speedMult: number;
   gatherMult: number;
+  unlockedWeapons: number[];
+  upgrades: UpgradeId[];
+  ownedItems: ShopItemId[];
+  equippedHat: ShopItemId | null;
+  equippedAccessory: ShopItemId | null;
 }
 
 export interface LeaderNet {
@@ -106,7 +148,9 @@ export type GameEvent =
 export type ClientMessage =
   | ["j", string]
   | ["i", InputState]
-  | ["u", "damage" | "speed" | "gather"]
+  | ["u", UpgradeId]
+  | ["b", ShopItemId]
+  | ["q", ShopItemId]
   | ["r"]
   | ["p", number];
 

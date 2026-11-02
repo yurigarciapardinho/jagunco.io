@@ -8,6 +8,9 @@ import {
   SNAPSHOT_EVERY,
   TICK_RATE,
   WEAPONS,
+  UPGRADES,
+  shopItem,
+  upgradeChoices,
   angleDelta,
   clamp,
   xpForLevel,
@@ -22,6 +25,8 @@ import {
   type PrivateNet,
   type ProjectileNet,
   type ResourceKind,
+  type ShopItemId,
+  type UpgradeId,
 } from "../../contracts/game";
 
 const DT = 1 / TICK_RATE;
@@ -40,9 +45,13 @@ export interface ServerPlayer extends PlayerNet {
   damageMult: number;
   speedMult: number;
   gatherMult: number;
+  unlockedWeapons: number[];
+  upgrades: UpgradeId[];
+  ownedItems: ShopItemId[];
   cooldown: number;
   healCooldown: number;
   spikeCooldown: number;
+  spawnShield: number;
   buildSeq: number;
   privateDirty: boolean;
   events: GameEvent[];
@@ -208,9 +217,15 @@ export class World {
       damageMult: 1,
       speedMult: 1,
       gatherMult: 1,
+      unlockedWeapons: [0],
+      upgrades: [],
+      ownedItems: [],
+      equippedHat: null,
+      equippedAccessory: null,
       cooldown: 0,
       healCooldown: 0,
       spikeCooldown: 0,
+      spawnShield: 0,
       buildSeq: -1,
       privateDirty: true,
       events: [],
@@ -246,22 +261,58 @@ export class World {
       weapon: Number.isInteger(input.weapon) ? clamp(input.weapon, 0, WEAPONS.length - 1) : previousWeapon,
       heal: input.heal === true,
     };
-    if (player.input.weapon !== previousWeapon && WEAPONS[player.input.weapon].unlock <= player.level) {
+    if (player.input.weapon !== previousWeapon && player.unlockedWeapons.includes(player.input.weapon)) {
       player.weapon = player.input.weapon;
     }
   }
 
-  upgrade(id: number, kind: "damage" | "speed" | "gather"): void {
+  upgrade(id: number, kind: UpgradeId): void {
     const p = this.players.get(id);
-    if (!p || !p.alive || p.upgradePoints < 1) return;
-    const current = kind === "damage" ? p.damageMult : kind === "speed" ? p.speedMult : p.gatherMult;
-    if (current >= 1.6) return;
+    if (!p || !p.alive || p.upgradePoints < 1 || !upgradeChoices(p.level).includes(kind)) return;
+    if ((kind === "spear" || kind === "slingshot") && p.upgrades.includes(kind)) return;
+    const capped = (kind === "damage" && p.damageMult >= 1.6)
+      || (kind === "speed" && p.speedMult >= 1.45)
+      || (kind === "gather" && p.gatherMult >= 1.75)
+      || (kind === "vitality" && p.upgrades.includes("vitality"));
+    if (capped) return;
     p.upgradePoints--;
-    if (kind === "damage") p.damageMult = Math.min(1.6, p.damageMult + 0.15);
+    p.upgrades.push(kind);
+    if (kind === "spear") p.unlockedWeapons.push(1);
+    else if (kind === "slingshot") p.unlockedWeapons.push(2);
+    else if (kind === "damage") p.damageMult = Math.min(1.6, p.damageMult + 0.15);
     else if (kind === "speed") p.speedMult = Math.min(1.45, p.speedMult + 0.1);
-    else p.gatherMult = Math.min(1.75, p.gatherMult + 0.2);
+    else if (kind === "gather") p.gatherMult = Math.min(1.75, p.gatherMult + 0.2);
+    else if (kind === "vitality") this.recalculateMaxHp(p);
     p.privateDirty = true;
-    p.events.push({ t: "notice", text: `Melhoria aplicada: ${kind === "damage" ? "dano" : kind === "speed" ? "velocidade" : "coleta"}.` });
+    p.events.push({ t: "notice", text: `${UPGRADES[kind].name}: escolha aplicada.` });
+  }
+
+  buy(id: number, itemId: ShopItemId): void {
+    const p = this.players.get(id);
+    const item = shopItem(itemId);
+    if (!p || !p.alive || !item) return;
+    if (p.ownedItems.includes(itemId)) {
+      this.equip(id, itemId);
+      return;
+    }
+    if (p.gold < item.price) {
+      p.events.push({ t: "notice", text: `Faltam ${item.price - Math.floor(p.gold)} de ouro para ${item.name}.` });
+      return;
+    }
+    p.gold -= item.price;
+    p.ownedItems.push(itemId);
+    this.equip(id, itemId);
+    p.events.push({ t: "notice", text: `${item.name} comprado e equipado.` });
+  }
+
+  equip(id: number, itemId: ShopItemId): void {
+    const p = this.players.get(id);
+    const item = shopItem(itemId);
+    if (!p || !p.alive || !item || !p.ownedItems.includes(itemId)) return;
+    if (item.slot === "hat") p.equippedHat = itemId;
+    else p.equippedAccessory = itemId;
+    this.recalculateMaxHp(p);
+    p.privateDirty = true;
   }
 
   respawn(id: number): void {
@@ -270,17 +321,19 @@ export class World {
     const spawn = this.findSpawn();
     p.x = spawn.x;
     p.y = spawn.y;
+    this.recalculateMaxHp(p);
     p.hp = p.maxHp;
     p.alive = true;
     p.input = defaultInput();
     p.cooldown = 0;
     p.healCooldown = 0;
+    p.spawnShield = 2.5;
     p.wood = Math.floor(p.wood * 0.65);
     p.food = Math.max(20, Math.floor(p.food * 0.65));
     p.stone = Math.floor(p.stone * 0.65);
     p.gold = Math.floor(p.gold * 0.65);
     p.privateDirty = true;
-    p.events.push({ t: "notice", text: "De volta ao sertão. Reúna recursos e monte sua defesa." });
+    p.events.push({ t: "notice", text: "De volta ao sertão com proteção breve. Reúna recursos e monte sua defesa." });
     this.rebuildDynamicGrids();
   }
 
@@ -288,7 +341,10 @@ export class World {
     return {
       wood: Math.floor(p.wood), food: Math.floor(p.food), stone: Math.floor(p.stone), gold: Math.floor(p.gold),
       xp: Math.floor(p.xp), nextXp: p.nextXp, level: p.level, upgradePoints: p.upgradePoints,
-      damageMult: p.damageMult, speedMult: p.speedMult, gatherMult: p.gatherMult,
+      damageMult: this.statMultiplier(p, "damage"), speedMult: this.statMultiplier(p, "speed"),
+      gatherMult: this.statMultiplier(p, "gather"), unlockedWeapons: [...p.unlockedWeapons],
+      upgrades: [...p.upgrades], ownedItems: [...p.ownedItems],
+      equippedHat: p.equippedHat, equippedAccessory: p.equippedAccessory,
     };
   }
 
@@ -319,7 +375,10 @@ export class World {
       p.cooldown = Math.max(0, p.cooldown - DT);
       p.healCooldown = Math.max(0, p.healCooldown - DT);
       p.spikeCooldown = Math.max(0, p.spikeCooldown - DT);
+      p.spawnShield = Math.max(0, p.spawnShield - DT);
       if (!p.alive) continue;
+      const regen = p.equippedAccessory ? shopItem(p.equippedAccessory)?.regen ?? 0 : 0;
+      if (regen && p.hp < p.maxHp) p.hp = Math.min(p.maxHp, p.hp + regen * DT);
       this.movePlayer(p);
       this.useBuilding(p);
       if (p.input.attack && p.cooldown <= 0) this.attack(p);
@@ -371,6 +430,7 @@ export class World {
         hp: Math.ceil(other.hp), maxHp: other.maxHp, weapon: other.weapon, level: other.level,
         score: Math.floor(other.score), kills: other.kills, alive: other.alive,
         swing: other.swing, flash: other.flash,
+        equippedHat: other.equippedHat, equippedAccessory: other.equippedAccessory,
       })),
       objects,
       animals: visibleAnimals.map((animal) => ({
@@ -392,7 +452,7 @@ export class World {
     const length = Math.hypot(mx, my);
     if (length > 1) { mx /= length; my /= length; }
     p.aim = p.input.aim;
-    const speed = PLAYER_SPEED * p.speedMult;
+    const speed = PLAYER_SPEED * this.statMultiplier(p, "speed");
     p.x = clamp(p.x + mx * speed * DT, PLAYER_RADIUS, MAP_SIZE - PLAYER_RADIUS);
     p.y = clamp(p.y + my * speed * DT, PLAYER_RADIUS, MAP_SIZE - PLAYER_RADIUS);
     const nearby = this.objectGrid.query(p.x, p.y, 150);
@@ -429,7 +489,7 @@ export class World {
       this.projectiles.set(id, {
         id, x: p.x + Math.cos(p.aim) * 44, y: p.y + Math.sin(p.aim) * 44,
         aim: p.aim, owner: p.id, vx: Math.cos(p.aim) * speed, vy: Math.sin(p.aim) * speed,
-        life: weapon.range / speed, damage: weapon.damage * p.damageMult,
+        life: weapon.range / speed, damage: weapon.damage * this.statMultiplier(p, "damage"),
       });
       return;
     }
@@ -443,14 +503,14 @@ export class World {
     };
     for (const object of this.objectGrid.query(p.x, p.y, weapon.range + 100)) {
       if (object.hp <= 0 || !inArc(object, object.r)) continue;
-      this.hitObject(p, object, weapon.damage * p.damageMult, weapon.gather);
+      this.hitObject(p, object, weapon.damage * this.statMultiplier(p, "damage"), weapon.gather);
       if (++hits >= 3) break;
     }
     for (const animal of this.animalGrid.query(p.x, p.y, weapon.range + 60)) {
-      if (animal.hp > 0 && inArc(animal, 30)) this.hitAnimal(p, animal, weapon.damage * p.damageMult);
+      if (animal.hp > 0 && inArc(animal, 30)) this.hitAnimal(p, animal, weapon.damage * this.statMultiplier(p, "damage"));
     }
     for (const other of this.playerGrid.query(p.x, p.y, weapon.range + 60)) {
-      if (other.id !== p.id && other.alive && inArc(other, PLAYER_RADIUS)) this.hitPlayer(p, other, weapon.damage * p.damageMult);
+      if (other.id !== p.id && other.alive && inArc(other, PLAYER_RADIUS)) this.hitPlayer(p, other, weapon.damage * this.statMultiplier(p, "damage"));
     }
   }
 
@@ -505,7 +565,7 @@ export class World {
     object.version++;
     const resource = this.resourceFor(object.kind);
     if (resource) {
-      const amount = Math.max(1, Math.round((object.kind === "gold" ? 2 : 5) * p.gatherMult * gather));
+      const amount = Math.max(1, Math.round((object.kind === "gold" ? 2 : 5) * this.statMultiplier(p, "gather") * gather));
       p[resource] += amount;
       this.reward(p, object.kind === "gold" ? 4 : 2, object.kind === "gold" ? 5 : 2);
       this.events.push({ t: "gather", x: object.x, y: object.y, resource, value: amount });
@@ -525,10 +585,18 @@ export class World {
   private hitAnimal(p: ServerPlayer, animal: ServerAnimal, damage: number): void {
     animal.hp -= damage;
     animal.flash = 1;
-    animal.aggro = animal.kind === "boar" ? 7 : 0;
+    animal.aggro = animal.kind === "boar" ? 7 : 4;
     animal.state = 2;
-    animal.targetX = p.x;
-    animal.targetY = p.y;
+    if (animal.kind === "goat") {
+      const dx = animal.x - p.x;
+      const dy = animal.y - p.y;
+      const length = Math.hypot(dx, dy) || 1;
+      animal.targetX = clamp(animal.x + (dx / length) * 850, 30, MAP_SIZE - 30);
+      animal.targetY = clamp(animal.y + (dy / length) * 850, 30, MAP_SIZE - 30);
+    } else {
+      animal.targetX = p.x;
+      animal.targetY = p.y;
+    }
     this.events.push({ t: "hit", x: animal.x, y: animal.y, value: Math.round(damage), kind: animal.kind });
     if (animal.hp <= 0) {
       p.food += animal.kind === "boar" ? 45 : 25;
@@ -540,7 +608,7 @@ export class World {
   }
 
   private hitPlayer(attacker: ServerPlayer | null, target: ServerPlayer, damage: number): void {
-    if (!target.alive) return;
+    if (!target.alive || target.spawnShield > 0) return;
     target.hp -= damage;
     target.flash = 1;
     this.events.push({ t: "hit", x: target.x, y: target.y, value: Math.round(damage), kind: "player" });
@@ -571,7 +639,24 @@ export class World {
           const d = dist2(animal, p);
           if (d < best) { best = d; target = p; }
         }
+      } else if (animal.aggro <= 0) {
+        let best = 175 * 175;
+        for (const p of this.playerGrid.query(animal.x, animal.y, 175)) {
+          if (!p.alive) continue;
+          const d = dist2(animal, p);
+          if (d < best) { best = d; target = p; }
+        }
+        if (target) {
+          const dx = animal.x - target.x;
+          const dy = animal.y - target.y;
+          const length = Math.hypot(dx, dy) || 1;
+          animal.aggro = 2.4;
+          animal.targetX = clamp(animal.x + (dx / length) * 650, 30, MAP_SIZE - 30);
+          animal.targetY = clamp(animal.y + (dy / length) * 650, 30, MAP_SIZE - 30);
+          target = undefined;
+        }
       }
+      if (animal.kind === "goat" && animal.aggro > 0) animal.state = 2;
       if (target) {
         animal.state = 2;
         animal.targetX = target.x;
@@ -582,7 +667,7 @@ export class World {
           animal.cooldown = 1.15;
           this.hitPlayer(null, target, 16);
         }
-      } else if (animal.think <= 0) {
+      } else if (animal.think <= 0 && (animal.kind === "boar" || animal.aggro <= 0)) {
         animal.state = animal.kind === "goat" && animal.flash > 0 ? 2 : 1;
         animal.think = 1.8 + this.random() * 3.5;
         animal.aim = this.random() * Math.PI * 2;
@@ -594,7 +679,7 @@ export class World {
       const distance = Math.hypot(dx, dy);
       const stop = target && distance < 55;
       if (distance > 8 && !stop) {
-        const speed = animal.kind === "boar" ? (target ? 190 : 75) : (animal.state === 2 ? 180 : 65);
+        const speed = animal.kind === "boar" ? (target ? 190 : 75) : (animal.state === 2 ? 225 : 65);
         animal.aim = Math.atan2(dy, dx);
         animal.x = clamp(animal.x + (dx / distance) * speed * DT, 25, MAP_SIZE - 25);
         animal.y = clamp(animal.y + (dy / distance) * speed * DT, 25, MAP_SIZE - 25);
@@ -669,12 +754,32 @@ export class World {
       p.level++;
       p.upgradePoints++;
       p.nextXp = xpForLevel(p.level);
-      p.maxHp = Math.min(160, p.maxHp + 3);
+      this.recalculateMaxHp(p);
       p.hp = Math.min(p.maxHp, p.hp + 20);
       this.events.push({ t: "level", id: p.id, level: p.level });
       p.events.push({ t: "notice", text: `Nível ${p.level}! Escolha uma melhoria no painel.` });
     }
     p.privateDirty = true;
+  }
+
+  private statMultiplier(p: ServerPlayer, stat: "damage" | "speed" | "gather"): number {
+    const base = stat === "damage" ? p.damageMult : stat === "speed" ? p.speedMult : p.gatherMult;
+    let multiplier = base;
+    for (const itemId of [p.equippedHat, p.equippedAccessory]) {
+      if (!itemId) continue;
+      const item = shopItem(itemId);
+      const bonus = item?.[stat];
+      if (typeof bonus === "number") multiplier *= bonus;
+    }
+    return multiplier;
+  }
+
+  private recalculateMaxHp(p: ServerPlayer): void {
+    const previous = p.maxHp;
+    const hatHp = p.equippedHat ? shopItem(p.equippedHat)?.maxHp ?? 0 : 0;
+    const vitality = p.upgrades.includes("vitality") ? 20 : 0;
+    p.maxHp = 100 + Math.min(60, (p.level - 1) * 3) + vitality + hatHp;
+    p.hp = Math.min(p.maxHp, p.hp + Math.max(0, p.maxHp - previous));
   }
 
   private resourceFor(kind: ObjectKind): ResourceKind | null {

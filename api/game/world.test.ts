@@ -28,14 +28,19 @@ describe("World authoritative rules", () => {
     expect(walls[0].hp).toBe(BUILDINGS[1].hp);
   });
 
-  it("applies upgrades and consumes a real upgrade point", () => {
+  it("offers a level-two branch and unlocks only the chosen weapon", () => {
     const world = new World(42);
     const p = joined(world);
+    p.level = 2;
     p.upgradePoints = 1;
-    world.upgrade(p.id, "damage");
-    world.upgrade(p.id, "damage");
-    expect(p.damageMult).toBeCloseTo(1.15);
+    world.upgrade(p.id, "slingshot");
+    expect(p.upgradePoints).toBe(1);
+    world.upgrade(p.id, "spear");
+    world.upgrade(p.id, "spear");
+    expect(p.unlockedWeapons).toEqual([0, 1]);
     expect(p.upgradePoints).toBe(0);
+    world.setInput(p.id, input(1, { weapon: 1 }));
+    expect(p.weapon).toBe(1);
   });
 
   it("consumes food and restores health with a cooldown", () => {
@@ -54,6 +59,8 @@ describe("World authoritative rules", () => {
     const world = new World(42);
     const p = joined(world);
     p.level = 3;
+    p.upgradePoints = 1;
+    world.upgrade(p.id, "slingshot");
     world.setInput(p.id, input(1, { weapon: 2, attack: true }));
     world.step();
     expect(p.weapon).toBe(2);
@@ -77,8 +84,53 @@ describe("World authoritative rules", () => {
     world.respawn(target.id);
     expect(target.alive).toBe(true);
     expect(target.hp).toBe(target.maxHp);
+    target.x = 3250;
+    target.y = 3200;
+    attacker.x = 3200;
+    attacker.y = 3200;
+    world.setInput(attacker.id, input(attacker.input.seq + 1, { attack: false, aim: 0 }));
+    world.step();
+    attacker.cooldown = 0;
+    world.setInput(attacker.id, input(attacker.input.seq + 1, { attack: true, aim: 0 }));
+    world.step();
+    expect(target.hp).toBe(target.maxHp);
   });
 
+
+  it("charges gold once, equips the purchase and applies its real bonus", () => {
+    const world = new World(42);
+    const p = joined(world);
+    world.buy(p.id, "strawHat");
+    expect(p.ownedItems).toHaveLength(0);
+    p.gold = 100;
+    world.buy(p.id, "strawHat");
+    expect(p.gold).toBe(0);
+    expect(p.equippedHat).toBe("strawHat");
+    expect(world.privateNet(p).gatherMult).toBeCloseTo(1.2);
+    world.buy(p.id, "strawHat");
+    expect(p.gold).toBe(0);
+    p.gold = 180;
+    world.buy(p.id, "boots");
+    expect(p.equippedAccessory).toBe("boots");
+    expect(world.privateNet(p).speedMult).toBeCloseTo(1.12);
+    expect(p.gold).toBe(0);
+  });
+
+  it("keeps unlocks and owned equipment through respawn", () => {
+    const world = new World(42);
+    const p = joined(world);
+    p.level = 2;
+    p.upgradePoints = 1;
+    world.upgrade(p.id, "spear");
+    p.gold = 250;
+    world.buy(p.id, "leatherHat");
+    p.alive = false;
+    world.respawn(p.id);
+    expect(p.unlockedWeapons).toContain(1);
+    expect(p.ownedItems).toContain("leatherHat");
+    expect(p.equippedHat).toBe("leatherHat");
+    expect(p.maxHp).toBe(128);
+  });
   it("sends static objects once per spectator and removes them outside AOI", () => {
     const world = new World(42);
     const p = joined(world);
@@ -92,5 +144,37 @@ describe("World authoritative rules", () => {
     world.step();
     const moved = world.snapshot(p.id, known);
     expect(moved.removedObjects.length).toBeGreaterThan(0);
+  });
+
+  it("makes a struck goat flee away from its attacker", () => {
+    const world = new World(42);
+    const p = joined(world);
+    const goat = [...world.animals.values()].find((animal) => animal.kind === "goat")!;
+    p.x = 3200;
+    p.y = 3200;
+    goat.x = 3270;
+    goat.y = 3200;
+    const before = Math.hypot(goat.x - p.x, goat.y - p.y);
+    world.setInput(p.id, input(1, { attack: true, aim: 0 }));
+    world.step();
+    world.setInput(p.id, input(2));
+    for (let i = 0; i < 30; i++) world.step();
+    const after = Math.hypot(goat.x - p.x, goat.y - p.y);
+    expect(after).toBeGreaterThan(before + 60);
+  });
+
+  it("makes a nearby boar pursue and injure the player", () => {
+    const world = new World(42);
+    const p = joined(world);
+    const boar = [...world.animals.values()].find((animal) => animal.kind === "boar")!;
+    p.x = 3200;
+    p.y = 3200;
+    boar.x = 3500;
+    boar.y = 3200;
+    const before = Math.hypot(boar.x - p.x, boar.y - p.y);
+    for (let i = 0; i < 75; i++) world.step();
+    const after = Math.hypot(boar.x - p.x, boar.y - p.y);
+    expect(after).toBeLessThan(before - 100);
+    expect(p.hp).toBeLessThan(p.maxHp);
   });
 });

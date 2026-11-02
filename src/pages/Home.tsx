@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import {
-  Apple, Axe, Coins, Heart, Mountain, Pause, Play,
-  Skull, Sparkles, Swords, TreePine, Volume2, VolumeX, Wind,
+  Apple, Axe, Check, Coins, Crosshair, Heart, LockKeyhole, Mountain, Pause, Play,
+  Skull, Sparkles, Store, Swords, TreePine, Volume2, VolumeX, Wind, X,
 } from "lucide-react";
-import { BUILDINGS, WEAPONS } from "@contracts/game";
+import { BUILDINGS, SHOP_ITEMS, UPGRADES, WEAPONS, upgradeChoices, type UpgradeId } from "@contracts/game";
 import { startGame, stopGame, type GameController } from "@/game/boot";
 import { initialHud, type HudState } from "@/game/hud";
 
@@ -31,6 +31,10 @@ export default function Home() {
   const inRoom = hud.phase === "playing" || hud.phase === "dead";
   const weaponArt = ["weapon_machete", "weapon_spear", "weapon_slingshot"];
   const buildArt = ["", "wall", "spike", "mill_tower"];
+  const upgradeIcons = {
+    spear: Swords, slingshot: Crosshair, damage: Axe,
+    speed: Wind, gather: TreePine, vitality: Heart,
+  } satisfies Record<UpgradeId, typeof Axe>;
 
   return (
     <div id="game-root">
@@ -113,6 +117,7 @@ export default function Home() {
 
             <div className="top-actions">
               <span className="ping-indicator"><i className={hud.ping < 140 ? "good" : "warn"} /> {hud.ping || "—"} ms</span>
+              <button data-testid="shop-button" className={`icon-button ${hud.shopOpen ? "active" : ""}`} disabled={hud.phase !== "playing"} onClick={() => controller?.toggleShop()} aria-label="Abrir loja (B)" title="Loja de equipamentos (B)"><Store /></button>
               <button className="icon-button" onClick={() => controller?.togglePause()} aria-label="Pausar"><Pause /></button>
               <button className="icon-button" onClick={() => controller?.toggleMute()} aria-label={hud.muted ? "Ativar som" : "Silenciar"}>
                 {hud.muted ? <VolumeX /> : <Volume2 />}
@@ -122,11 +127,44 @@ export default function Home() {
             {hud.notice && <div className="notice"><Sparkles size={16} /> {hud.notice}</div>}
 
             {hud.upgradePoints > 0 && hud.phase === "playing" && (
-              <section className="upgrades hud-panel">
-                <header><Sparkles size={15} /> MELHORIA DISPONÍVEL <b>{hud.upgradePoints}</b></header>
-                <button onClick={() => controller?.upgrade("damage")}><Axe /><span>Dano bruto<small>+15% de dano</small></span><b>+</b></button>
-                <button onClick={() => controller?.upgrade("speed")}><Wind /><span>Pé ligeiro<small>+10% de velocidade</small></span><b>+</b></button>
-                <button onClick={() => controller?.upgrade("gather")}><TreePine /><span>Mão de obra<small>+20% na coleta</small></span><b>+</b></button>
+              <section className="upgrades hud-panel" data-testid="upgrade-panel">
+                <header><Sparkles size={15} /> ESCOLHA DE NÍVEL {hud.level} <b>{hud.upgradePoints}</b></header>
+                <p>Uma escolha. Sua ramificação.</p>
+                {upgradeChoices(hud.level).map((id) => {
+                  const Icon = upgradeIcons[id];
+                  const chosen = (id === "spear" || id === "slingshot" || id === "vitality") && hud.upgrades.includes(id);
+                  return (
+                    <button key={id} data-testid={`upgrade-${id}`} disabled={chosen} onClick={() => controller?.upgrade(id)}>
+                      <Icon /><span>{UPGRADES[id].name}<small>{UPGRADES[id].description}</small></span><b>+</b>
+                    </button>
+                  );
+                })}
+              </section>
+            )}
+
+            {hud.shopOpen && hud.phase === "playing" && (
+              <section className="shop-panel hud-panel" data-testid="shop-panel" aria-label="Loja do sertão">
+                <header><Store size={18} /><span>LOJA DO SERTÃO<small>Equipamentos comprados ficam após o respawn</small></span><button onClick={() => controller?.toggleShop()} aria-label="Fechar loja"><X /></button></header>
+                <div className="shop-balance"><span>SALDO DISPONÍVEL</span><b><Coins /> {hud.gold}</b></div>
+                <div className="shop-grid">
+                  {SHOP_ITEMS.map((item) => {
+                    const owned = hud.ownedItems.includes(item.id);
+                    const equipped = item.slot === "hat" ? hud.equippedHat === item.id : hud.equippedAccessory === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        data-testid={`shop-item-${item.id}`}
+                        className={`shop-item ${equipped ? "equipped" : ""} ${!owned && hud.gold < item.price ? "unaffordable" : ""}`}
+                        onClick={() => owned ? controller?.equipItem(item.id) : controller?.buyItem(item.id)}
+                      >
+                        <span className="shop-item-icon">{item.slot === "hat" ? <Store /> : item.id === "boots" ? <Wind /> : item.id === "patua" ? <Heart /> : <Swords />}</span>
+                        <span className="shop-item-copy"><small>{item.slot === "hat" ? "CHAPÉU" : "ACESSÓRIO"}</small><strong>{item.name}</strong><span>{item.description}</span></span>
+                        <b className="shop-item-action">{equipped ? <><Check /> EQUIPADO</> : owned ? "EQUIPAR" : <><Coins /> {item.price}</>}</b>
+                      </button>
+                    );
+                  })}
+                </div>
+                <footer><kbd>B</kbd> FECHAR • COMPRAR EQUIPA AUTOMATICAMENTE</footer>
               </section>
             )}
 
@@ -135,14 +173,14 @@ export default function Home() {
                 <button
                   key={weapon.name}
                   className={`hotbar-slot ${hud.weapon === index ? "selected" : ""}`}
-                  disabled={hud.level < weapon.unlock}
+                  disabled={!hud.unlockedWeapons.includes(index)}
                   onClick={() => controller?.selectWeapon(index)}
-                  title={hud.level < weapon.unlock ? `Desbloqueia no nível ${weapon.unlock}` : weapon.name}
+                  title={!hud.unlockedWeapons.includes(index) ? `Escolha esta arma no nível ${weapon.unlock}` : weapon.name}
                 >
                   <kbd>{index + 1}</kbd>
                   <img className="item-icon weapon-icon" src={`/art/icons/${weaponArt[index]}.png`} alt="" draggable={false} />
                   <span>{index === 0 ? "FACÃO" : index === 1 ? "LANÇA" : "ESTILINGUE"}</span>
-                  {hud.level < weapon.unlock && <small>NÍV. {weapon.unlock}</small>}
+                  {!hud.unlockedWeapons.includes(index) && <small><LockKeyhole /> NÍV. {weapon.unlock}</small>}
                 </button>
               ))}
               <div className="hotbar-divider" />
@@ -167,7 +205,7 @@ export default function Home() {
               </button>
             </section>
 
-            <div className="desktop-hint"><span><kbd>Z X C</kbd> CONSTRUIR</span><span><kbd>1 2 3</kbd> ARMAS</span><span><kbd>ESC</kbd> PAUSA</span></div>
+            <div className="desktop-hint"><span><kbd>Z X C</kbd> CONSTRUIR</span><span><kbd>B</kbd> LOJA</span><span><kbd>1 2 3</kbd> ARMAS</span><span><kbd>ESC</kbd> PAUSA</span></div>
             <div className="mobile-actions">
               <button
                 className="attack-button"

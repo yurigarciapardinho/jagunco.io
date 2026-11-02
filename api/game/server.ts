@@ -7,6 +7,8 @@ import { WebSocket, WebSocketServer, type RawData } from "ws";
 import {
   MAX_INPUT_BYTES,
   PROTOCOL_VERSION,
+  SHOP_ITEMS,
+  UPGRADES,
   SNAPSHOT_EVERY,
   TICK_RATE,
   type ClientMessage,
@@ -197,8 +199,18 @@ export class GameServer {
         break;
       }
       case "u":
-        if (connection.joined && (message[1] === "damage" || message[1] === "speed" || message[1] === "gather")) {
+        if (connection.joined && typeof message[1] === "string" && message[1] in UPGRADES) {
           this.world.upgrade(connection.id!, message[1]);
+        }
+        break;
+      case "b":
+        if (connection.joined && SHOP_ITEMS.some((item) => item.id === message[1])) {
+          this.world.buy(connection.id!, message[1]);
+        }
+        break;
+      case "q":
+        if (connection.joined && SHOP_ITEMS.some((item) => item.id === message[1])) {
+          this.world.equip(connection.id!, message[1]);
         }
         break;
       case "r":

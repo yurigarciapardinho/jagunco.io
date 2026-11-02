@@ -146,21 +146,59 @@ describe("World authoritative rules", () => {
     expect(moved.removedObjects.length).toBeGreaterThan(0);
   });
 
-  it("makes a struck goat flee away from its attacker", () => {
+  it("does not make an unhurt goat flee just because a player is nearby", () => {
     const world = new World(42);
     const p = joined(world);
     const goat = [...world.animals.values()].find((animal) => animal.kind === "goat")!;
-    p.x = 3200;
-    p.y = 3200;
-    goat.x = 3270;
-    goat.y = 3200;
+    goat.x = p.x + 100;
+    goat.y = p.y;
+    goat.think = 10;
+    goat.targetX = goat.x;
+    goat.targetY = goat.y;
+    for (let i = 0; i < 30; i++) world.step();
+    expect(goat.aggro).toBe(0);
+    expect(goat.state).not.toBe(2);
+    expect(goat.hp).toBe(goat.maxHp);
+  });
+
+  it("makes a struck goat flee away from its attacker for a limited window", () => {
+    const world = new World(42);
+    const p = joined(world);
+    const goat = [...world.animals.values()].find((animal) => animal.kind === "goat")!;
+    p.x = goat.x - 70;
+    p.y = goat.y;
     const before = Math.hypot(goat.x - p.x, goat.y - p.y);
     world.setInput(p.id, input(1, { attack: true, aim: 0 }));
     world.step();
+    expect(goat.hp).toBeLessThan(goat.maxHp);
+    expect(goat.aggro).toBeGreaterThan(0);
     world.setInput(p.id, input(2));
     for (let i = 0; i < 30; i++) world.step();
     const after = Math.hypot(goat.x - p.x, goat.y - p.y);
     expect(after).toBeGreaterThan(before + 60);
+    for (let i = 0; i < 35; i++) world.step();
+    expect(goat.aggro).toBe(0);
+  });
+
+  it("makes enemy spikes solid, damaging and knock the player away", () => {
+    const world = new World(42);
+    const owner = joined(world, "Dono");
+    const target = joined(world, "Alvo");
+    const spike = {
+      id: 90000, kind: "spike" as const, x: target.x + 45, y: target.y,
+      r: 38, hp: 180, maxHp: 180, owner: owner.id, flash: 0,
+      version: 2, natural: false, respawnAt: 0,
+    };
+    world.objects.set(spike.id, spike);
+    world.objectGrid.insert(spike);
+    const startX = target.x;
+    world.setInput(target.id, input(1, { mx: 1 }));
+    world.step();
+    expect(target.hp).toBe(target.maxHp - 20);
+    expect(target.x).toBeLessThan(startX - 50);
+    expect(target.x).toBeLessThan(spike.x - 60);
+    world.step();
+    expect(target.hp).toBe(target.maxHp - 20);
   });
 
   it("makes a nearby boar pursue and injure the player", () => {

@@ -458,14 +458,6 @@ export class World {
     const nearby = this.objectGrid.query(p.x, p.y, 150);
     for (const object of nearby) {
       if (object.hp <= 0) continue;
-      if (object.kind === "spike") {
-        if (object.owner !== p.id && p.spikeCooldown <= 0 && dist2(p, object) < (PLAYER_RADIUS + object.r) ** 2) {
-          p.spikeCooldown = 0.8;
-          const owner = object.owner ? this.players.get(object.owner) ?? null : null;
-          this.hitPlayer(owner, p, 14);
-        }
-        continue;
-      }
       const dx = p.x - object.x;
       const dy = p.y - object.y;
       const distance = Math.hypot(dx, dy);
@@ -473,8 +465,14 @@ export class World {
       if (distance < minDistance) {
         const nx = distance > 0.001 ? dx / distance : 1;
         const ny = distance > 0.001 ? dy / distance : 0;
-        p.x = object.x + nx * minDistance;
-        p.y = object.y + ny * minDistance;
+        const knockback = object.kind === "spike" && object.owner !== p.id ? 52 : 0;
+        p.x = clamp(object.x + nx * (minDistance + knockback), PLAYER_RADIUS, MAP_SIZE - PLAYER_RADIUS);
+        p.y = clamp(object.y + ny * (minDistance + knockback), PLAYER_RADIUS, MAP_SIZE - PLAYER_RADIUS);
+        if (object.kind === "spike" && object.owner !== p.id && p.spikeCooldown <= 0) {
+          p.spikeCooldown = 0.55;
+          const owner = object.owner ? this.players.get(object.owner) ?? null : null;
+          this.hitPlayer(owner, p, 20);
+        }
       }
     }
   }
@@ -585,7 +583,7 @@ export class World {
   private hitAnimal(p: ServerPlayer, animal: ServerAnimal, damage: number): void {
     animal.hp -= damage;
     animal.flash = 1;
-    animal.aggro = animal.kind === "boar" ? 7 : 4;
+    animal.aggro = animal.kind === "boar" ? 7 : 2;
     animal.state = 2;
     if (animal.kind === "goat") {
       const dx = animal.x - p.x;
@@ -638,22 +636,6 @@ export class World {
           if (!p.alive) continue;
           const d = dist2(animal, p);
           if (d < best) { best = d; target = p; }
-        }
-      } else if (animal.aggro <= 0) {
-        let best = 175 * 175;
-        for (const p of this.playerGrid.query(animal.x, animal.y, 175)) {
-          if (!p.alive) continue;
-          const d = dist2(animal, p);
-          if (d < best) { best = d; target = p; }
-        }
-        if (target) {
-          const dx = animal.x - target.x;
-          const dy = animal.y - target.y;
-          const length = Math.hypot(dx, dy) || 1;
-          animal.aggro = 2.4;
-          animal.targetX = clamp(animal.x + (dx / length) * 650, 30, MAP_SIZE - 30);
-          animal.targetY = clamp(animal.y + (dy / length) * 650, 30, MAP_SIZE - 30);
-          target = undefined;
         }
       }
       if (animal.kind === "goat" && animal.aggro > 0) animal.state = 2;

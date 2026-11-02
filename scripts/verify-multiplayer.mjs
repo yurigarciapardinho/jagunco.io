@@ -75,6 +75,7 @@ await a.getByTestId("shop-item-strawHat").click();
 await a.waitForFunction(() => document.querySelector(".notice")?.textContent?.includes("Faltam 100"), null, { timeout: 5000 });
 await a.keyboard.press("KeyB");
 await a.getByTestId("shop-panel").waitFor({ state: "hidden" });
+await a.locator("canvas").click({ position: { x: 640, y: 400 } });
 
 const beforeW = await pos(a);
 await a.keyboard.down("KeyW");

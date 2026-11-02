@@ -112,7 +112,10 @@ await b.waitForFunction(() => window.__GAME_READY__ === true);
 await b.getByLabel("Nome do jogador").fill("Volante Teste");
 await b.getByRole("button", { name: /ENTRAR NA SALA/ }).click();
 await b.locator(".status-panel").waitFor({ timeout: 10000 });
-await a.waitForTimeout(1200);
+await a.waitForFunction(() => {
+  const text = document.querySelector(".leaderboard")?.textContent ?? "";
+  return text.includes("Volante Teste") && text.includes("Lampião Teste");
+}, null, { timeout: 15000 });
 const board = await a.locator(".leaderboard").textContent();
 if (!board?.includes("Volante Teste") || !board.includes("Lampião Teste")) throw new Error(`Shared leaderboard failed: ${board}`);
 await a.screenshot({ path: `${shots}/04-two-players.png` });

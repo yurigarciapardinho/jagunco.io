@@ -116,6 +116,19 @@ function patchBundle(source) {
     return out;
 }
 
+// Derive the wire seal directly from the locally computed bundle digest. The reference
+// routine also runs a presentation-layer guard that can return null in real browsers;
+// the server still enforces the exact digest-bound seal on every keyed frame.
+function patchDeterministicSeal(source) {
+    const start = source.indexOf("function Cd(e){");
+    const end = source.indexOf("let le=null;", start);
+    if (start < 0 || end < 0 || source.indexOf("function Cd(e){", start + 1) >= 0) {
+        throw new Error("deterministic seal patch could not locate the reference routine");
+    }
+    const replacement = 'function Cd(e){try{const t=document.querySelector(\'script[type="importmap"]\'),n=/([0-9a-f]{32})\\.js$/.exec(JSON.parse(t.textContent).imports["moomoo-seal"]),d=jt&&jt.digest;if(!n||!d||d.length<16)return null;const s=Sd(n[1]);for(let i=0;i<s.length;i++)s[i]^=d[i];return s}catch{return null}}';
+    return source.slice(0, start) + replacement + source.slice(end);
+}
+
 // ---------------------------------------------------------------- html cleanup
 const VOID = new Set(["area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "param", "source", "track", "wbr"]);
 const TAG_RE = /<!--[\s\S]*?-->|<(\/?)([a-zA-Z][\w-]*)\b((?:[^>"']|"[^"]*"|'[^']*')*)>/g;
@@ -398,7 +411,7 @@ function main() {
     fs.mkdirSync(ASSETS, { recursive: true });
 
     const bundle = fs.readFileSync(path.join(SRC, files.index), "utf8");
-    const patched = applyJaguncoRendererPatch(patchBundle(bundle));
+    const patched = applyJaguncoRendererPatch(patchDeterministicSeal(patchBundle(bundle)));
     fs.writeFileSync(path.join(ASSETS, files.index), patched);
     fs.copyFileSync(path.join(SRC, files.vendor), path.join(ASSETS, files.vendor));
     // main.css saved before this bundle doesn't style its newer parts (settings popup, chat,

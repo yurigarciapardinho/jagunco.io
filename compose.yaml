@@ -40,11 +40,17 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
+      - "443:443/udp"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data/caddy
+      - caddy-config:/config/caddy
     depends_on:
       - app
 
 volumes:
   game-data:
   mysql-data:
+  caddy-data:
+  caddy-config:

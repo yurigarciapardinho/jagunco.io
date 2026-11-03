@@ -1,4 +1,7 @@
-:80 {
-    encode zstd gzip
+54.221.34.83.sslip.io {
     reverse_proxy app:3000
+}
+
+http://54.221.34.83 {
+    redir https://54.221.34.83.sslip.io{uri}
 }

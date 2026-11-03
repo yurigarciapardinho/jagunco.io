@@ -2,7 +2,7 @@
 
 Referência comportamental: `moomoo-clone` com cliente 1.9.4 (`index-993d072d.js`, API 1.31) e servidor local reconstruído. O servidor oficial privado do MooMoo não está nos anexos; esta matriz não afirma equivalência interna com ele.
 
-**Status: integração e testes locais concluídos; publicação em andamento.** A coluna de evidência distingue teste de unidade, navegador, MySQL real e produção.
+**Status: integração, testes e validação pública concluídos.** A coluna de evidência distingue teste de unidade, navegador, MySQL real e produção.
 
 ## 1. Arquitetura adotada
 
@@ -109,7 +109,7 @@ Referência comportamental: `moomoo-clone` com cliente 1.9.4 (`index-993d072d.js
 | Sistema | Origem / arquivos | Estado | Teste de aceitação e evidência |
 | --- | --- | --- | --- |
 | Origem, build, bundle, ticket e membros | `connection.js`, `config.js` | adaptada | Gate ativo; configuração ausente no anexo reconstruída e coberta por 9 testes. |
-| HMAC, sequência, máscara, ledger e selo | `protocol/` | portada | Replay, gap, tamper, malformed, unknown e selo quebrado rejeitados. |
+| HMAC, sequência, máscara, ledger e selo | `protocol/`, `tools/build-official-client.mjs` | **adaptada** | Replay, gap, tamper, malformed e unknown rejeitados; derivação determinística do digest confirmada no frame real e por dois navegadores públicos. |
 | Rate limit, payload e validação de ações | `anticheat/`, `packets.js` | adaptada | Flood, 40 strikes, payload limitado e permissões forjadas rejeitadas. |
 | Desktop, keybinds, loja e menus | cliente 1.9.4 | portada | Movimento, ataque, coleta, construção, upgrade, chat e loja no Chromium. |
 | Mobile, sticks, mira e ataque | `tools/build-touch-module.mjs`, cliente | **adaptada** | nipplejs local; dois sticks, frames reais, zero erros/HTTP≥400 em duas verificações. |
@@ -141,14 +141,19 @@ Referência comportamental: `moomoo-clone` com cliente 1.9.4 (`index-993d072d.js
 | Benchmark de tick | 40 jogadores, 51 animais, 564 objetos, 500 ticks: média 5,37 ms; p95 34,44 ms; 32.170 frames de saída. |
 | Soak | 12 s com 40 clientes simulados e 51 animais ativos; não usado como evidência de partidas humanas. |
 | GPU | SwiftShader, 61,9 ms/frame; **não valida 60 fps em GPU real**. |
+| HTTPS público | Let’s Encrypt emitido pelo Caddy; `/ping` responde em `https://54.221.34.83.sslip.io/ping`; certificado em volume persistente. |
+| Multiplayer público | Dois Chromium independentes em LC, **2 jogadores** no `/ping`, ambos os nomes no ranking dos dois clientes, movimento e ataque enviados sem erro de aplicação. |
+| Persistência pública | Cadastro e perfil HTTP 200; após `docker compose restart app`, login HTTP 200 com o mesmo ID de conta no MySQL. |
 
 ## 7. Limitações restantes
 
 - A lógica do servidor oficial privado do MooMoo não está disponível; bosses, alguns efeitos e regras do clone são reconstruções.
 - Não foi medido desempenho em GPU real. O dado de SwiftShader não é usado para prometer 60 fps.
 - A partida transitória não é integralmente persistida após reinício; persistência garantida cobre contas/social/moderação e a retomada por 30 s cobre queda de conexão.
-- Publicação e validação pública final são registradas na seção de release após o deploy.
-
 ## 8. Release
 
-Em publicação: commit, preview e URL pública serão preenchidos após a validação final na EC2.
+- URL pública: **https://54.221.34.83.sslip.io/**
+- TLS: Let’s Encrypt, renovação automática pelo Caddy; volumes `caddy-data` e `caddy-config`.
+- Infraestrutura: app Node 20, MySQL 8.4 e Caddy em Docker Compose na EC2; imagem anterior preservada como `jagunco-app:pre-seal-fix`.
+- Evidências de navegador: `verification-shots/public-https-player-a.png` e `verification-shots/public-https-player-b.png` (artefatos locais de QA, não incluídos no pacote público).
+- Commit e versão de preview: registrados na entrega final da sessão.

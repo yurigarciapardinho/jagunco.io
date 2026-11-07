@@ -25,6 +25,7 @@ services:
       HOST: 0.0.0.0
       APP_ID: jagunco-standalone
       APP_SECRET: ${APP_SECRET:?defina APP_SECRET no .env}
+      OWNER_EMAIL: ${OWNER_EMAIL:-}
       DATABASE_URL: mysql://jagunco:${MYSQL_PASSWORD}@db:3306/jagunco
     expose:
       - "3000"

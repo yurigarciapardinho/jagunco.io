@@ -55,11 +55,12 @@ A partida transitória continua em memória. Uma queda de WebSocket tem 30 segun
 
 ### Docker Compose
 
-O Compose inclui aplicação, MySQL 8.4 com volume e Caddy na porta 80:
+O Compose inclui aplicação, MySQL 8.4 com volume e Caddy nas portas 80/443:
 
 ```bash
 cp .env.example .env
 # Preencha APP_SECRET, MYSQL_PASSWORD e MYSQL_ROOT_PASSWORD no .env.
+# Opcional: OWNER_EMAIL=<seu-email> promove essa conta a administradora.
 docker compose up -d --build
 ```
 
@@ -83,6 +84,17 @@ curl http://localhost:3000/s/LC/ping
 ```
 
 O console administrativo aceita comandos apenas por loopback e exige o token de `DATA_DIR/admin.token`. Não exponha esse arquivo nem o `.env`.
+
+### Administrador no jogo
+
+1. Crie entre com uma conta e escolha o nome do jogador.
+2. Conceda o cargo pelo e-mail do proprietário em `OWNER_EMAIL` ou pelo console:
+
+```bash
+docker compose exec app node tools/console.mjs "role <nome-do-jogador> admin"
+```
+
+3. Entre novamente na partida. Contas administradoras veem o botão **Admin**, com Godlike, imortalidade, aura, chefe, invisibilidade, multiplicadores, recursos e invocação de animais. O painel usa somente pacotes autorizados pelo servidor; convidados e contas comuns não recebem esses poderes.
 
 ## Arquitetura
 

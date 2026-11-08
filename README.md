@@ -75,6 +75,7 @@ node scripts/verify-authoritative.mjs
 npm run build
 node scripts/verify-mobile.mjs
 npm run verify:admin             # cliente gerado, painel e reconexão em navegador
+npm run verify:rewards:mysql     # recompensas, MySQL real e reinício; requer Docker
 ```
 
 Smoke operacional:
@@ -102,6 +103,36 @@ Botões e seletores mostram o estado confirmado pelo servidor, inclusive ao reab
 Poderes, multiplicadores e efeitos temporários do console duram a vida atual. Uma queda de conexão preserva esse estado por até 30 segundos; retomar nesse prazo mantém personagem, inventário, recursos, equipamentos e progressão. Morrer, iniciar outra vida ou deixar a janela expirar limpa os poderes. Reiniciar o servidor também inicia personagens novos; o cargo salvo na conta permanece.
 
 Perder o cargo de administrador remove imediatamente seus poderes atuais, fecha o painel e bloqueia novos comandos. Isso também vale para personagens com a conexão suspensa e para a troca de admin para mod. Recursos e equipamentos já concedidos seguem as regras normais da partida. O console do proprietário pode conceder efeitos a jogadores sem cargo; essas concessões também terminam na morte ou em uma nova vida e não dão acesso ao painel.
+
+## Recompensas de encontros
+
+| Encontro natural | Ouro do finalizador | Comida | Estatística de abate |
+| --- | ---: | ---: | --- |
+| MOOSTAFA | 8.000 | 100 | moostafa |
+| MOOFIE | 3.000 | 1.000 | moofie |
+| Treasure | 5.000 | 0 | treasure |
+| Yeti | 4.500 | 800 | yeti |
+| Crab King | 4.000 | 0 | crab_king |
+
+O finalizador recebe o ouro e o registro do abate. No Crab King, assistentes vivos que ainda pertencem à mesma partida e causaram pelo menos 5% da vida máxima também recebem Crab Shell e a marcação de participação da partida; não recebem uma divisão automática do ouro. Um personagem removido não transfere essa marcação a quem reutilizar seu SID.
+
+Invocados administrativos mantêm o ouro e os registros atuais, mas não dão comida nem reaparecem. Entidades em espera de respawn não recebem dano ou pagam outra recompensa antes de reaparecer.
+
+O ouro alimenta a progressão de XP com o mesmo valor. A regra atual avança no máximo uma idade por chamada e descarta o excedente ao atingir o limiar; esse comportamento foi mantido. O drop de comida também acrescenta seu valor ao XP da arma atual, separadamente dos ganhos dos golpes.
+
+### Crab Shell: perfil e equipamento
+
+Para contas autenticadas, a conquista do Shell registra imediatamente o desbloqueio da aparência no perfil e enfileira sua persistência. O registro é idempotente e também considera chapéus earned de preço zero ao salvar uma vida. A conclusão da fila confirma a gravação no banco.
+
+A aparência do perfil permanece após sair ou reiniciar. A posse do equipamento de combate segue as regras da partida: permanece no mesmo personagem, inclusive na retomada durante a janela de reconexão, mas não é concedida automaticamente a um personagem novo. O item continua indisponível para compra comum. Estatísticas acumuladas de ouro e comida não são um saldo de recursos restaurado em uma nova partida.
+
+Não há migração retroativa de recompensas antigas neste lote. A correção registra novas conquistas e os itens ganhos ainda presentes ao salvar uma vida.
+
+### Verificação com MySQL real
+
+O comando npm run verify:rewards:mysql requer Docker e a imagem mysql:8.4 instalada. Ele cria um banco de teste exclusivo em loopback, usa o modo de produção sem fallback JSON, verifica as recompensas e a aparência, reinicia o banco e a aplicação compilada e remove o contêiner e o volume criados pelo próprio teste.
+
+Essa verificação também confere a credencial e o cargo persistidos, a revogação de poderes, a ausência de equipamento automático no personagem novo e a rejeição de aparência não conquistada ou autenticação inválida.
 
 ## Arquitetura
 

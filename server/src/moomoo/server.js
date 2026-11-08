@@ -198,9 +198,11 @@ export class Game {
             if (key) stats.animalKills[key] = (stats.animalKills[key] || 0) + 1;
         }
         if (ai.index === CRAB_KING) {
-            const winners = new Set([doer]);
+            // A departed participant may still be referenced by damageBy. Match the
+            // current player object, not its reusable sid, before granting credit.
+            const winners = new Set(this.players.includes(doer) ? [doer] : []);
             for (const [player, damage] of ai.damageBy) {
-                if (player.alive && damage >= ai.maxHealth * 0.05) winners.add(player);
+                if (this.players.includes(player) && player.alive && damage >= ai.maxHealth * 0.05) winners.add(player);
             }
             for (const player of winners) {
                 this.crabKillers.add(player.sid);
@@ -209,6 +211,9 @@ export class Game {
                     player.skins[HAT.CRAB_SHELL] = 1;
                     player.send("5", 0, HAT.CRAB_SHELL, 0);
                 }
+                // The profile collection survives the match. Recording at the award
+                // avoids depending on the recipient's later death/disconnection.
+                if (player.account && this.accounts) this.accounts.recordUnlocks(player.account, { hat: HAT.CRAB_SHELL });
             }
             this.server.broadcast("6", -1, `${doer.shownName(null)} defeated the Crab King!`);
             // other servers hear about it too ("The Crab King has fallen on <server> to <name>")
@@ -338,7 +343,7 @@ export class Game {
         if (!player.account || !this.accounts) return;
         for (const [id, owned] of Object.entries(player.skins)) {
             const hat = hats.find(h => h.id === Number(id));
-            if (owned && hat && hat.price > 0) this.accounts.recordUnlocks(player.account, { hat: hat.id });
+            if (owned && hat && (hat.price > 0 || hat.earned)) this.accounts.recordUnlocks(player.account, { hat: hat.id });
         }
         for (const [id, owned] of Object.entries(player.tails)) {
             const acc = accessories.find(a => a.id === Number(id));

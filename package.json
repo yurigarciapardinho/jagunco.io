@@ -13,7 +13,8 @@
     "verify": "node scripts/verify-authoritative.mjs",
     "verify:mobile": "node scripts/verify-mobile.mjs",
     "format": "prettier --write .",
-    "verify:admin": "node scripts/verify-admin-session.mjs"
+    "verify:admin": "node scripts/verify-admin-session.mjs",
+    "verify:rewards:mysql": "node scripts/verify-rewards-mysql.mjs"
   },
   "dependencies": {
     "bad-words": "^4.1.5",

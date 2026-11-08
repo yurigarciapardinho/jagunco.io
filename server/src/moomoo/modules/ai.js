@@ -371,7 +371,8 @@ export class AI {
 
         // CHANGE HEALTH:
         this.changeHealth = function (val, doer, runFrom) {
-            if (this.active) {
+            // A waiting respawn is not an active combat life and cannot pay again.
+            if (this.active && !this.spawnCounter) {
                 // SERVER: the Crab King can't be hit while it is under water
                 if (val < 0 && this.submerged) return false;
                 this.health += val;

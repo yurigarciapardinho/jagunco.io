@@ -192,3 +192,18 @@ test("Turret Gear fires at the nearest valid enemy and respects rate/EMP/team", 
     owner2.shootTurret();
     assert.equal(game2.projectiles.filter(p => p.active).length, 0, "teammate skipped");
 });
+
+test("clearAnimals also removes inactive creatures from projectile collision fixtures", t => {
+    const game = makeGame(t);
+    clearWorld(game);
+    const owner = addPlayer(game, { name: "owner" });
+    const target = addPlayer(game, { name: "target" });
+    place(owner, 3000, 3000);
+    place(target, 4700, 4000);
+    for (const animal of game.ais) place(animal, -1000000, -1000000);
+    place(game.ais[0], 4400, 4000);
+    clearAnimals(game);
+    const projectile = fire(game, owner);
+    projectile.update(500);
+    assert.equal(target.health, 75, "an animal removed by the fixture must not intercept the arrow");
+});

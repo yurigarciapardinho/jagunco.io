@@ -15,6 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { applyJaguncoRendererPatch } from "./jagunco-renderer-patch.mjs";
+import { patchCaveClient } from "./cave-renderer-patch.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "client-official/source");
@@ -55,7 +56,7 @@ const PATCHES = [
     },
     {
         name: "servers in the \"local\" region live on this host (/s/<key>)",
-        from: new RegExp(`function ${ID}\\(${ID}\\)\\{return \\.region==0\\?"localhost":`),
+        from: new RegExp(`function ${ID}\\(${ID}\\)\\{return \\2\\.region==0\\?"localhost":`),
         to: 'function $1($2){return $2.region=="local"?location.host+"/s/"+$2.key:'
     },
     {
@@ -85,22 +86,22 @@ const PATCHES = [
     },
     {
         name: "hide unsupported password-reset code link",
-        from: /fn\\(wa,"Forgot password\\?",p0\\)/,
+        from: /fn\(wa,"Forgot password\?",p0\)/,
         to: 'fn(wa,"",null)'
     },
     {
         name: "hide unsupported sign-up code link",
-        from: /fn\\(wa,"Use a code",p0\\)/,
+        from: /fn\(wa,"Use a code",p0\)/,
         to: 'fn(wa,"",null)'
     },
     {
         name: "show the in-game admin panel to admins",
-        from: /function X0\\(\\)\\{document\\.getElementById\\("adminButton"\\)\\.style\\.display="none"\\}/,
-        to: 'function X0(){document.getElementById("adminButton").style.display=qe=="admin"?"":"none"}'
+        from: /function X0\(\)\{document\.getElementById\("adminButton"\)\.style\.display="none"\}/,
+        to: 'function X0(){adminUpdateAccess()}'
     },
     {
         name: "wire the in-game admin panel",
-        from: /const n=document\\.getElementById\\("adminButton"\\);n\\.onclick=u\\.checkTrusted\\(function\\(\\)\\{\\}\\),u\\.hookTouchEvents\\(n\\),/,
+        from: /const n=document\.getElementById\("adminButton"\);n\.onclick=u\.checkTrusted\(function\(\)\{\}\),u\.hookTouchEvents\(n\),/,
         to: 'const n=document.getElementById("adminButton");n.onclick=u.checkTrusted(function(){adminToggle()}),u.hookTouchEvents(n),'
     }
 ];
@@ -113,7 +114,7 @@ if (args.has("--no-anti-debug")) {
     });
 }
 
-function patchBundle(source) {
+export function patchBundle(source) {
     let out = source;
     for (const patch of PATCHES) {
         const global = new RegExp(patch.from.source, "g");
@@ -142,16 +143,21 @@ function patchDeterministicSeal(source) {
 
 // The saved 1.9.4 bundle shipped the admin shell but not its behavior. Rebuild the panel
 // against the server's existing "A" packet: powers, multipliers, resources and animal spawn.
-function patchAdminPanel(source) {
+export function patchAdminPanel(source) {
     const anchor = 'const Al=document.getElementById("adminMenu");document.getElementById("adminHolder");';
-    const count = source.split(anchor).length - 1;
-    if (count !== 1) throw new Error(`admin panel anchor matched ${count} times (expected 1)`);
-    const panel = `${anchor}
-let adminPowerState={godlike:!1,god:!1,aura:!1,boss:!1,invisible:!1};
-function adminToggle(){if(Al.style.display=="block"){Al.style.display="none";return}nt.style.display="none",sn(),qt(),Vs.style.display="none",ua(),Al.style.display="block",adminRender()}
-function adminRender(){const e=document.getElementById("adminHolder");u.removeAllChildren(e);const t=document.createElement("div");t.className="adminHead";const n=document.createElement("span");n.textContent="Admin",t.appendChild(n);const a=document.createElement("span");a.className="adminClose",a.textContent="×",a.onclick=u.checkTrusted(function(){Al.style.display="none"}),t.appendChild(a),e.appendChild(t);const s=document.createElement("div");s.className="adminTitle",s.textContent="Poderes",e.appendChild(s);[["godlike","Godlike"],["god","Imortal"],["aura","Aura"],["boss","Chefe"],["invisible","Invisível"]].forEach(function(c){const f=document.createElement("div");f.className="adminRow";const l=document.createElement("span");l.className="adminLabel",l.textContent=c[1],f.appendChild(l);const h=document.createElement("span");h.className="adminBtn",h.textContent=adminPowerState[c[0]]?"Ativado":"Ativar",adminPowerState[c[0]]&&h.classList.add("on"),h.onclick=u.checkTrusted(function(){adminPowerState[c[0]]=!adminPowerState[c[0]],H.send("A",c[0],adminPowerState[c[0]]?1:0),h.textContent=adminPowerState[c[0]]?"Ativado":"Ativar",h.classList.toggle("on",adminPowerState[c[0]])}),f.appendChild(h),e.appendChild(f)});const r=document.createElement("div");r.className="adminTitle",r.textContent="Multiplicadores",e.appendChild(r);[["size",[1,1.5,2,3],"Tamanho"],["power",[1,2,5,10,20,50,100],"Poder"],["speed",[1,1.5,2,5,10,20],"Velocidade"],["health",[1,2,5,10,20],"Vida"]].forEach(function(c){const f=document.createElement("div");f.className="adminRow";const l=document.createElement("span");l.className="adminLabel",l.textContent=c[2],f.appendChild(l);const h=document.createElement("select");h.className="adminSelect",c[1].forEach(function(d){const p=document.createElement("option");p.value=d,p.textContent=d+"×",h.appendChild(p)}),h.onchange=u.checkTrusted(function(){H.send("A",c[0],Number(h.value))}),f.appendChild(h),e.appendChild(f)});const i=document.createElement("div");i.className="adminTitle",i.textContent="Recursos",e.appendChild(i);["Madeira","Comida","Pedra","Ouro"].forEach(function(c,f){const l=document.createElement("span");l.className="adminBtn",l.textContent="+10 mil "+c,l.onclick=u.checkTrusted(function(){H.send("A","give",f,1e4)}),e.appendChild(l)});const o=document.createElement("div");o.className="adminTitle",o.textContent="Animais",e.appendChild(o);const m=document.createElement("div");m.className="adminRow";const v=document.createElement("select");v.className="adminSelect",bt.kinds.forEach(function(c,f){if(c&&c.name){const l=document.createElement("option");l.value=f,l.textContent=c.name,v.appendChild(l)}}),m.appendChild(v);const C=document.createElement("span");C.className="adminBtn",C.textContent="Invocar",C.onclick=u.checkTrusted(function(){H.send("A","spawn",Number(v.value))}),m.appendChild(C),e.appendChild(m)}
-`;
-    return source.replace(anchor, panel);
+    const panel = fs.readFileSync(path.join(ROOT, "tools/client-admin-panel.js"), "utf8");
+    const patches = [
+        [anchor, anchor + "\n" + panel + "\n"],
+        ['function $p(e){Be=e.teams,e.animals&&(bt.setKinds(e.animals),m2())}',
+         'function $p(e){e.teams&&(Be=e.teams),e.animals&&(bt.setKinds(e.animals),m2()),e.self&&adminUpdateSelf(e.self),e.admin&&adminReceiveState(e.admin)}'],
+        ['function Mc(e){', 'function Mc(e){adminDisconnect();']
+    ];
+    for (const [from, to] of patches) {
+        const count = source.split(from).length - 1;
+        if (count !== 1) throw new Error('admin panel anchor matched ' + count + ' times (expected 1): ' + from);
+        source = source.replace(from, () => to);
+    }
+    return source;
 }
 
 // ---------------------------------------------------------------- html cleanup
@@ -436,7 +442,7 @@ function main() {
     fs.mkdirSync(ASSETS, { recursive: true });
 
     const bundle = fs.readFileSync(path.join(SRC, files.index), "utf8");
-    const patched = applyJaguncoRendererPatch(patchAdminPanel(patchDeterministicSeal(patchBundle(bundle))));
+    const patched = applyJaguncoRendererPatch(patchCaveClient(patchAdminPanel(patchDeterministicSeal(patchBundle(bundle)))));
     fs.writeFileSync(path.join(ASSETS, files.index), patched);
     fs.copyFileSync(path.join(SRC, files.vendor), path.join(ASSETS, files.vendor));
     // main.css saved before this bundle doesn't style its newer parts (settings popup, chat,
@@ -462,4 +468,4 @@ function main() {
     console.log(`done -> ${path.relative(ROOT, OUT)}`);
 }
 
-main();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

@@ -273,7 +273,7 @@ export class AccountStore {
         return { hats: [0].concat(u.hats || []), accs: [0].concat(u.accs || []), weapons };
     }
 
-    // Called from the game: hats / accessories bought, weapon variants reached.
+    // Called from the game: hats bought or earned, accessories bought, weapon variants reached.
     recordUnlocks(account, { hat, acc, weapon, variant }) {
         const u = account.unlocks = account.unlocks || { hats: [], accs: [], weapons: {} };
         let changed = false;

@@ -138,7 +138,7 @@ test("map bounds clamp players and animals inside the map", (t) => {
     const player = addPlayer(game);
 
     // west wall: a player crossing FROM inside the map is clamped to playerScale
-    player.x = 20;
+    place(player, 20, 4000); // stay outside the secret gorge regardless of the random spawn
     player.keepInWorld(100, 4000);
     assert.equal(player.x, config.playerScale, "west wall clamps to playerScale");
 

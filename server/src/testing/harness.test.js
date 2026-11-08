@@ -24,14 +24,18 @@ export function makeGame(t) {
     return game;
 }
 
-// Remove every generated world object (trees/rocks/gold) so placement/collision is deterministic.
+// Isolate object/weapon fixtures from generated resources and static cave terrain.
 export function clearWorld(game) {
+    game.object_manager.terrain = null;
     for (const obj of game.game_objects) if (obj.active) game.object_manager.disableObj(obj);
 }
 
 // Deactivate every spawned animal so ai_manager.spawn() gives us fresh, controlled ones.
 export function clearAnimals(game) {
-    for (const ai of game.ais) ai.active = false;
+    for (const ai of game.ais) {
+        ai.active = false;
+        ai.alive = false;
+    }
 }
 
 // A spawned, alive player driven through the real Game.addPlayer + Player.spawn path.

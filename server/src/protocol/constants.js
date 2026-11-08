@@ -70,7 +70,7 @@ export const PACKET_NAMES = {
         A: "admin command", V: "watch stats (+ in-game profile)", I: "anonymous mode"
     },
     s2c: {
-        A: "initData", B: "disconnect", C: "setupGame", D: "addPlayer", E: "removePlayer", a: "updatePlayers",
+        A: "initData / own description and admin state", B: "disconnect", C: "setupGame", D: "addPlayer", E: "removePlayer", a: "updatePlayers",
         G: "leaderboard", H: "loadObjects", I: "updateAnimals", J: "animalAttack", K: "gatherAnimation", L: "wiggle",
         M: "turretShoot", N: "playerValue", O: "health", P: "killPlayer", Q: "killObject", R: "killObjects",
         S: "itemCount", T: "age", U: "upgrades", V: "items", X: "addProjectile", Y: "removeProjectile",

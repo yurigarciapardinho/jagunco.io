@@ -21,11 +21,9 @@ const ADMIN_POWERS = ["god", "aura", "godlike", "boss", "invisible"];
 const REPORT_REASONS = ["Bot", "Hack", "Autoheal", "Abuse"];   // [om], sent as index + 1
 const MAX_TRIBE_NAME = 7;
 
-// Re-send "D" (addPlayer) to everyone except the player itself, e.g. after a size change.
+// Observers re-learn the description; self receives a non-spawning metadata update.
 function resendData(game, player) {
-    for (const viewer of game.players) {
-        if (viewer !== player) delete player.sentTo[viewer.id];
-    }
+    game.refreshPlayerData(player);
 }
 
 function teleport(player, x, y) {
@@ -42,6 +40,11 @@ function teleport(player, x, y) {
 function resyncSelf(ctx, player) {
     const { game } = ctx;
     player.send("C", player.sid);                                            // setupGame: own sid
+    // D creates the client's own Player. Every dependent value must follow it;
+    // marking it sent also prevents the next tick from spawning it a second time.
+    player.sentTo[player.id] = true;
+    player.attrCache.delete(player.sid);
+    player.send("D", player.getData(player), true);
     for (const type of config.resourceTypes) player.send("N", type, player[type], 1);
     player.send("N", "kills", player.kills, 1);
     player.send("T", player.XP, UTILS.fixTo(player.maxXP, 1), player.age);   // age / xp bar
@@ -61,6 +64,7 @@ function resyncSelf(ctx, player) {
         if (tribe) player.send("4", game.clan_manager.members(tribe).flatMap(p => [p.sid, p.name]));
     }
     if (player.dive) player.send("m", player.sid, player.dive, 0);
+    game.syncAdminState(player, true);
 }
 
 export function handlePacket(ctx, player, name, args) {
@@ -91,7 +95,7 @@ export function handlePacket(ctx, player, name, args) {
             player.setUserData(data);
             player.spawn(Boolean(data.moofoll));
             player.attrCache.clear();
-            player.send("C", player.sid);
+            resyncSelf(ctx, player);
             ac.onGameStart();
             if (ctx.log) ctx.log(`[${game.key}] spawn sid ${player.sid} as "${player.name}"`);
             return;
@@ -369,8 +373,12 @@ export function handlePacket(ctx, player, name, args) {
 
         // ADMIN COMMANDS
         case "A": {
-            if (player.role !== "admin") return invalid("admin command");
+            if (player.role !== "admin") {
+                game.syncAdminState(player, true);
+                return invalid("admin command");
+            }
             handleAdmin(ctx, player, args);
+            game.syncAdminState(player);
             return;
         }
 

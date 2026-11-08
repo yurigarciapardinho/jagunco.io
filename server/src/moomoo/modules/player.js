@@ -12,6 +12,8 @@ const mathPOW = Math.pow;
 const mathSQRT = Math.sqrt;
 const mathABS = Math.abs;
 
+const defaultPowers = () => ({ god: 0, aura: 0, godlike: 0, boss: 0, invisible: 0, size: 1, power: 1, speed: 1, health: 1 });
+
 export class Player {
 
     constructor(id, sid, config, UTILS, projectileManager, objectManager, players, ais, items, hats, accessories, server, scoreCallback, iconCallback) {
@@ -59,7 +61,8 @@ export class Player {
         this.lifeStats = null;
         this.watchStats = -1;
         this.joinRequests = new Set();
-        this.powers = { god: 0, aura: 0, godlike: 0, boss: 0, invisible: 0, size: 1, power: 1, speed: 1, health: 1 };
+        this.powers = defaultPowers();
+        this.powerEpoch = 0;
         // SERVER: drawn as an animal (aiTypes index, -1 = no), dive state (0 surface,
         // 1 diving, 2 under, 3 coming up), shown with their clan as tribe tag, anonymous mode.
         this.morph = -1;
@@ -72,6 +75,7 @@ export class Player {
 
         // SPAWN:
         this.spawn = function (moofoll) {
+            this.resetPowers();
             this.active = true;
             this.alive = true;
             this.lockMove = false;
@@ -133,10 +137,13 @@ export class Player {
             if (spawnPoint) {
                 this.x = spawnPoint[0];
                 this.y = spawnPoint[1];
+                objectManager.resolveTerrain(this, this.x, this.y);
             } else {
                 for (let i = 0; i < 20; i++) {
                     this.x = UTILS.randInt(this.scale, config.mapScale - this.scale);
                     this.y = UTILS.randInt(this.scale, config.mapScale - this.scale);
+                    const safe = objectManager.outsideReservedSpawn(this.x, this.y, this.scale);
+                    this.x = safe.x; this.y = safe.y;
                     if (objectManager.checkItemLocation(this.x, this.y, this.scale, 0.6, null, true)) break;
                 }
             }
@@ -398,6 +405,7 @@ export class Player {
 
         // SERVER: world bounds, including the secret area west of x = 0.
         this.keepInWorld = function (prevX, prevY) {
+            objectManager.resolveTerrain(this, prevX, prevY);
             if (this.y - this.scale < 0) {
                 this.y = this.scale;
             } else if (this.y + this.scale > config.mapScale) {
@@ -640,7 +648,8 @@ export class Player {
             for (let t = 0; t < tmpList.length; ++t) {
                 for (let i = 0; i < tmpList[t].length; ++i) {
                     tmpObj = tmpList[t][i];
-                    if (tmpObj.active && !tmpObj.dontGather && !hitObjs[tmpObj.sid] && tmpObj.visibleToPlayer(this)) {
+                    if (tmpObj.active && !tmpObj.dontGather && !hitObjs[tmpObj.sid] && tmpObj.visibleToPlayer(this) &&
+                        !objectManager.terrainBlocksSegment(this.x, this.y, tmpObj.x, tmpObj.y)) {
                         tmpDist = UTILS.getDistance(this.x, this.y, tmpObj.x, tmpObj.y) - tmpObj.scale;
                         if (tmpDist <= items.weapons[this.weaponIndex].range) {
                             tmpDir = UTILS.getDirection(tmpObj.x, tmpObj.y, this.x, this.y);
@@ -671,7 +680,8 @@ export class Player {
             // CHECK IF HIT PLAYER:
             for (let i = 0; i < players.length + ais.length; ++i) {
                 tmpObj = players[i] || ais[i - players.length];
-                if (tmpObj != this && tmpObj.alive && !tmpObj.submerged && !(tmpObj.team && tmpObj.team == this.team)) {
+                if (tmpObj != this && tmpObj.alive && !tmpObj.submerged && !(tmpObj.team && tmpObj.team == this.team) &&
+                    !objectManager.terrainBlocksSegment(this.x, this.y, tmpObj.x, tmpObj.y)) {
                     tmpDist = UTILS.getDistance(this.x, this.y, tmpObj.x, tmpObj.y) - tmpObj.scale * 1.8;
                     if (tmpDist <= items.weapons[this.weaponIndex].range) {
                         tmpDir = UTILS.getDirection(tmpObj.x, tmpObj.y, this.x, this.y);
@@ -789,6 +799,21 @@ export class Player {
             const dx = mathABS(other.x - this.x) - other.scale;
             const dy = mathABS(other.y - this.y) - other.scale;
             return dx <= config.maxScreenWidth / 2 * 1.3 && dy <= config.maxScreenHeight / 2 * 1.3;
+        };
+
+        // Temporary administrative effects belong to one life. The epoch also
+        // retires delayed console effects when that life or its admin role ends.
+        this.resetPowers = function () {
+            this.powerEpoch++;
+            this.powers = defaultPowers();
+            this.morph = -1;
+            this.dive = 0;
+            this.disguised = false;
+            if (this.alive) this.applyPowers();
+            else {
+                this.scale = config.playerScale;
+                this.maxHealth = 100;
+            }
         };
 
         // SERVER: admin power multipliers (size / health) take effect immediately.

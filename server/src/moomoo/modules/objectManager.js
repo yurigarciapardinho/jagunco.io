@@ -1,3 +1,6 @@
+import terrain from "../../../../shared/cave.js";
+const { intersectsDisk, traceTerrain, resolveMotion, outsideReserved, confine } = terrain;
+
 var mathFloor = Math.floor;
 var mathABS = Math.abs;
 var mathCOS = Math.cos;
@@ -7,6 +10,16 @@ var mathSQRT = Math.sqrt;
 export class ObjectManager {
     constructor(GameObject, gameObjects, UTILS, config, players, server) {
         this.objects = gameObjects;
+        this.terrain = config.bossCave || null;
+        this.traceTerrain = (x1, y1, x2, y2, radius = 0) => traceTerrain(this.terrain, x1, y1, x2, y2, radius);
+        this.terrainBlocksSegment = (x1, y1, x2, y2) => Boolean(this.traceTerrain(x1, y1, x2, y2));
+        this.resolveTerrain = (entity, previousX, previousY) => {
+            const blocked = resolveMotion(this.terrain, entity, previousX, previousY);
+            confine(entity, entity.homeBounds);
+            return blocked;
+        };
+        this.isReservedSpawn = (x, y, radius) => Boolean(this.terrain && intersectsDisk(x, y, radius, this.terrain.reserved));
+        this.outsideReservedSpawn = (x, y, radius) => outsideReserved(this.terrain, x, y, radius);
         this.grids = {};
         this.updateObjects = [];
         var cactusDamage = typeof config.cactusDamage === "number" ? config.cactusDamage : 20;
@@ -234,6 +247,8 @@ export class ObjectManager {
 
         // CHECK IF PLACABLE:
         this.checkItemLocation = function(x, y, s, sM, indx, ignoreWater, placer) {
+            if (this.terrain && (this.terrain.walls.some(wall => intersectsDisk(x, y, s, wall)) ||
+                (placer && intersectsDisk(x, y, s, this.terrain.buildRestricted)))) return false;
             for (var i = 0; i < gameObjects.length; ++i) {
                 var blockS = gameObjects[i].blocker ? gameObjects[i].blocker : gameObjects[i].getScale(sM, gameObjects[i].isItem);
                 if (gameObjects[i].active && UTILS.getDistance(x, y, gameObjects[i].x, gameObjects[i].y) < s + blockS) {
@@ -332,6 +347,19 @@ export class ObjectManager {
                 }
             }
             return false;
+        };
+
+        // Collision separation can move both players. Sweep those displacements as
+        // well, so a large body or a structure cannot push another body through stone.
+        const collide = this.checkCollision;
+        this.checkCollision = (entity, other, delta) => {
+            const x = entity.x, y = entity.y, ox = other.x, oy = other.y;
+            const hit = collide.call(this, entity, other, delta);
+            if (hit) {
+                this.resolveTerrain(entity, other.teleport ? entity.x : x, other.teleport ? entity.y : y);
+                if (other.isPlayer) this.resolveTerrain(other, ox, oy);
+            }
+            return hit;
         };
     };
 }

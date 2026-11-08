@@ -74,6 +74,9 @@ node --test server/src/network/reconnection.test.js
 node scripts/verify-authoritative.mjs
 npm run build
 node scripts/verify-mobile.mjs
+npm run verify:admin             # cliente gerado, painel e reconexão em navegador
+npm run verify:cave              # caverna, guardiões, combate e touch real
+npm run verify:rewards:mysql     # recompensas, MySQL real e reinício; requer Docker
 ```
 
 Smoke operacional:
@@ -87,14 +90,71 @@ O console administrativo aceita comandos apenas por loopback e exige o token de 
 
 ### Administrador no jogo
 
-1. Crie entre com uma conta e escolha o nome do jogador.
+1. Entre com uma conta e escolha o nome do jogador.
 2. Conceda o cargo pelo e-mail do proprietário em `OWNER_EMAIL` ou pelo console:
 
 ```bash
 docker compose exec app node tools/console.mjs "role <nome-do-jogador> admin"
 ```
 
-3. Entre novamente na partida. Contas administradoras veem o botão **Admin**, com Godlike, imortalidade, aura, chefe, invisibilidade, multiplicadores, recursos e invocação de animais. O painel usa somente pacotes autorizados pelo servidor; convidados e contas comuns não recebem esses poderes.
+3. O cargo é aplicado imediatamente, inclusive para quem já está conectado. Contas administradoras na partida veem o botão **Admin**, com Godlike, imortalidade, aura, chefe, invisibilidade, multiplicadores, recursos e invocação de animais. Convidados, contas comuns e moderadores não têm acesso ao painel.
+
+Botões e seletores mostram o estado confirmado pelo servidor, inclusive ao reabrir o painel ou retomar a sessão. Godlike combina Imortal e Aura: desligar um desses componentes desmarca Godlike.
+
+Poderes, multiplicadores e efeitos temporários do console duram a vida atual. Uma queda de conexão preserva esse estado por até 30 segundos; retomar nesse prazo mantém personagem, inventário, recursos, equipamentos e progressão. Morrer, iniciar outra vida ou deixar a janela expirar limpa os poderes. Reiniciar o servidor também inicia personagens novos; o cargo salvo na conta permanece.
+
+Perder o cargo de administrador remove imediatamente seus poderes atuais, fecha o painel e bloqueia novos comandos. Isso também vale para personagens com a conexão suspensa e para a troca de admin para mod. Recursos e equipamentos já concedidos seguem as regras normais da partida. O console do proprietário pode conceder efeitos a jogadores sem cargo; essas concessões também terminam na morte ou em uma nova vida e não dão acesso ao painel.
+
+## Gruta do Tesouro
+
+A caverna fica no noroeste da região verde, entre x=1400–3800 e
+y=2600–5000. A entrada ao sul tem 420 unidades de largura e centro em
+x=2600, y=4940. MOOSTAFA e MOOFIE guardam fisicamente o Treasure no
+interior. O baú pode ser atacado com os dois vivos.
+
+As paredes são terreno permanente: bloqueiam corpos, golpes e projéteis,
+não dão recursos e não ocupam limites de construção. A passagem e sua
+aproximação ficam livres de construções; árvores, pedras e spawns
+aleatórios não são gerados na área reservada. Construções comuns continuam
+permitidas nas demais áreas válidas, inclusive no piso interno.
+
+Os três moradores naturais permanecem no interior, inclusive sob empurrões.
+Invocações administrativas comuns não herdam esse confinamento. Após um
+abate, MOOSTAFA reaparece em 60 s, MOOFIE em 30 s e Treasure em 120 s,
+nos respectivos pontos da caverna. O Crab King mantém sua arena secreta.
+
+Servidor e cliente usam a mesma geometria; a reconexão reenvia essa
+definição.
+
+## Recompensas de encontros
+
+| Encontro natural | Ouro do finalizador | Comida | Estatística de abate |
+| --- | ---: | ---: | --- |
+| MOOSTAFA | 8.000 | 100 | moostafa |
+| MOOFIE | 3.000 | 1.000 | moofie |
+| Treasure | 5.000 | 0 | treasure |
+| Yeti | 4.500 | 800 | yeti |
+| Crab King | 4.000 | 0 | crab_king |
+
+O finalizador recebe o ouro e o registro do abate. No Crab King, assistentes vivos que ainda pertencem à mesma partida e causaram pelo menos 5% da vida máxima também recebem Crab Shell e a marcação de participação da partida; não recebem uma divisão automática do ouro. Um personagem removido não transfere essa marcação a quem reutilizar seu SID.
+
+Invocados administrativos mantêm o ouro e os registros atuais, mas não dão comida nem reaparecem. Entidades em espera de respawn não recebem dano ou pagam outra recompensa antes de reaparecer.
+
+O ouro alimenta a progressão de XP com o mesmo valor. A regra atual avança no máximo uma idade por chamada e descarta o excedente ao atingir o limiar; esse comportamento foi mantido. O drop de comida também acrescenta seu valor ao XP da arma atual, separadamente dos ganhos dos golpes.
+
+### Crab Shell: perfil e equipamento
+
+Para contas autenticadas, a conquista do Shell registra imediatamente o desbloqueio da aparência no perfil e enfileira sua persistência. O registro é idempotente e também considera chapéus earned de preço zero ao salvar uma vida. A conclusão da fila confirma a gravação no banco.
+
+A aparência do perfil permanece após sair ou reiniciar. A posse do equipamento de combate segue as regras da partida: permanece no mesmo personagem, inclusive na retomada durante a janela de reconexão, mas não é concedida automaticamente a um personagem novo. O item continua indisponível para compra comum. Estatísticas acumuladas de ouro e comida não são um saldo de recursos restaurado em uma nova partida.
+
+Não há migração retroativa de recompensas antigas neste lote. A correção registra novas conquistas e os itens ganhos ainda presentes ao salvar uma vida.
+
+### Verificação com MySQL real
+
+O comando npm run verify:rewards:mysql requer Docker e a imagem mysql:8.4 instalada. Ele cria um banco de teste exclusivo em loopback, usa o modo de produção sem fallback JSON, verifica as recompensas e a aparência, reinicia o banco e a aplicação compilada e remove o contêiner e o volume criados pelo próprio teste.
+
+Essa verificação também confere a credencial e o cargo persistidos, a revogação de poderes, a ausência de equipamento automático no personagem novo e a rejeição de aparência não conquistada ou autenticação inválida.
 
 ## Arquitetura
 
@@ -117,3 +177,10 @@ O código do servidor oficial do MooMoo não é público. A referência é o cli
 ## Licença e créditos
 
 Veja `LICENSE`, `MOOMOO_CLONE_LICENSE.md` e `CREDITS.md`. Fontes, bibliotecas e materiais de referência têm seus avisos preservados.
+
+## Contribuição
+
+Todas as alterações seguem a convenção de commits descrita em
+[CONTRIBUTING.md](CONTRIBUTING.md): títulos de até 50 caracteres e corpo
+com finalidade e validação. O histórico novo é verificado na integração
+contínua com npm run check:commits.

@@ -8,11 +8,15 @@
     "build:touch": "node tools/build-touch-module.mjs",
     "start": "NODE_ENV=production node dist/boot.js",
     "start:source": "node server/src/index.js",
-    "test": "node --test server/",
-    "test:server": "node --test server/",
+    "test": "node scripts/test-server.mjs",
+    "test:server": "node scripts/test-server.mjs",
     "verify": "node scripts/verify-authoritative.mjs",
     "verify:mobile": "node scripts/verify-mobile.mjs",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "verify:admin": "node scripts/verify-admin-session.mjs",
+    "verify:rewards:mysql": "node scripts/verify-rewards-mysql.mjs",
+    "check:commits": "node scripts/check-commits.mjs",
+    "verify:cave": "node scripts/verify-cave.mjs"
   },
   "dependencies": {
     "bad-words": "^4.1.5",

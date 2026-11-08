@@ -328,7 +328,9 @@ export class AdminConsole {
                     if (!boss) {
                         const plan = config.server.animalSpawnPlan.find(p => p.index === index);
                         const pos = game.animalPosition(plan || { index });
-                        boss = game.ai_manager.spawn(pos.x, pos.y, 0, index, index === 11 ? { spawnDelay: 600000 } : null);
+                        const overrides = index === 11 ? { spawnDelay: 600000 } : {};
+                        if (plan?.caveResident) overrides.homeBounds = config.bossCave.interior;
+                        boss = game.ai_manager.spawn(pos.x, pos.y, 0, index, overrides);
                     }
                     boss.spawnCounter = 0;
                     boss.health = boss.maxHealth;
@@ -434,10 +436,11 @@ export class AdminConsole {
             const { game, player } = this.findPlayer(a[0]);
             const seconds = Math.min(30, Math.max(1, Number(a[1]) || 4));
             const godBefore = player.powers.god;
+            const powerEpoch = player.powerEpoch;
             const steps = [[1, 700, 0], [2, 0, 700], [3, 1650, 700 + seconds * 1000], [0, 0, 2350 + seconds * 1000]];
             for (const [state, ms, at] of steps) {
                 setTimeout(() => {
-                    if (!game.players.includes(player)) return;
+                    if (!game.players.includes(player) || !player.alive || player.powerEpoch !== powerEpoch) return;
                     game.setDive(player, state, ms);
                     if (state === 1) player.powers.god = 1;
                     if (state === 0) player.powers.god = godBefore;
@@ -635,15 +638,14 @@ export class AdminConsole {
             return [`unbanned ${key}`];
         });
 
-        add("role", "role <account name> <admin|mod|none>", "staff role for a signed-in account (rejoin to apply)", (a) => {
+        add("role", "role <account name> <admin|mod|none>", "staff role for a signed-in account (applied immediately)", (a) => {
             const role = norm(a[a.length - 1]);
             const name = a.slice(0, -1).join(" ");
             if (!["admin", "mod", "none"].includes(role)) throw new Error("role <account name> <admin|mod|none>");
-            if (!this.accounts.setRole(name, role === "none" ? null : role)) throw new Error(`no account named "${name}" (they need to sign in and play once)`);
-            for (const { player } of this.allPlayers()) {
-                if (player.account && player.account.name === name) player.role = role === "none" ? null : role;
-            }
-            return [`${name} is now ${role}`];
+            const account = this.accounts.nameOwner(name);
+            if (!account || !this.accounts.setRole(account.name, role === "none" ? null : role)) throw new Error(`no account named "${name}" (they need to sign in and play once)`);
+            for (const game of this.games.values()) game.setAccountRole(account.id, account.role);
+            return [`${account.name} is now ${role}`];
         });
 
         add("flags", "flags <player>", "anticheat summary for a player", (a) => {
@@ -695,10 +697,8 @@ export class AdminConsole {
         return C;
     }
 
-    // Re-send player data to everyone else (size / aura / boss flags changed).
+    // Refresh observers and the recipient without respawning the recipient's client.
     resend(game, player) {
-        for (const viewer of game.players) {
-            if (viewer !== player) delete player.sentTo[viewer.id];
-        }
+        game.refreshPlayerData(player);
     }
 }

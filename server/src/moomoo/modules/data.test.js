@@ -115,13 +115,13 @@ test("AI table: passives passive, hostiles hostile, bosses flagged, drops valid"
     assert.ok(crabKing.hitRange > 0, "Crab King breaks structures (hitRange)");
 });
 
-test("spawn plan: boss arenas sit in the right biomes", () => {
+test("spawn plan: the cave groups its residents and preserves the secret pool", () => {
     const mid = config.mapScale / 2;
-    const moostafa = config.server.animalSpawnPlan.find(p => p.index === 6);
-    assert.ok(moostafa.positions[0].yRatio * config.mapScale >= config.mapScale - config.snowBiomeTop, "MOOSTAFA arena is in the desert");
-
-    const moofie = config.server.animalSpawnPlan.find(p => p.index === 8);
-    assert.ok(moofie.positions[0].yRatio * config.mapScale <= config.snowBiomeTop, "MOOFIE arena is in the snow");
+    for (const [index, name] of [[6, "moostafa"], [7, "treasure"], [8, "moofie"]]) {
+        const plan = config.server.animalSpawnPlan.find(p => p.index === index);
+        assert.equal(plan.caveResident, true);
+        assert.deepEqual(plan.positions[0], config.bossCave.spawns[name]);
+    }
 
     const crab = config.server.animalSpawnPlan.find(p => p.index === 11);
     assert.equal(crab.area, "secret");

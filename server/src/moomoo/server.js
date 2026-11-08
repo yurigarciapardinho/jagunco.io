@@ -115,7 +115,8 @@ export class Game {
         const riverBottom = cfg.mapScale / 2 + cfg.riverWidth / 2;
         const pick = (list) => list[Math.floor(Math.random() * list.length)];
         const place = (x, y, scale, type, ignoreWater) => {
-            if (!this.object_manager.checkItemLocation(x, y, scale, 0.6, null, ignoreWater)) return false;
+            if (this.object_manager.isReservedSpawn(x, y, scale) ||
+                !this.object_manager.checkItemLocation(x, y, scale, 0.6, null, ignoreWater)) return false;
             this.object_manager.add(this.game_objects.length, x, y, 0, scale, type, undefined, false, null);
             return true;
         };
@@ -172,9 +173,10 @@ export class Game {
             let y = UTILS.randInt(type.scale, config.mapScale - type.scale);
             if (plan.area === "snow") y = UTILS.randInt(type.scale, config.snowBiomeTop - type.scale);
             if (plan.area === "river") y = UTILS.randInt(config.mapScale / 2 - config.riverWidth, config.mapScale / 2 + config.riverWidth);
-            if (this.object_manager.checkItemLocation(x, y, type.scale, 0.6, null, true)) return { x, y };
+            if (!this.object_manager.isReservedSpawn(x, y, type.scale) &&
+                this.object_manager.checkItemLocation(x, y, type.scale, 0.6, null, true)) return { x, y };
         }
-        return { x: UTILS.randInt(0, config.mapScale), y: UTILS.randInt(0, config.mapScale) };
+        return this.object_manager.outsideReservedSpawn(UTILS.randInt(0, config.mapScale), UTILS.randInt(0, config.mapScale), type.scale);
     }
 
     ensureAnimals() {
@@ -182,7 +184,8 @@ export class Game {
             const active = this.ais.filter(ai => ai.active && ai.index === plan.index && !ai.despawnOnDeath).length;
             for (let i = active; i < plan.desired; i++) {
                 const pos = this.animalPosition(plan);
-                const overrides = plan.index === CRAB_KING ? { spawnDelay: 10 * 60 * 1000 } : null;
+                const overrides = plan.index === CRAB_KING ? { spawnDelay: 10 * 60 * 1000 } : {};
+                if (plan.caveResident) overrides.homeBounds = config.bossCave.interior;
                 this.ai_manager.spawn(pos.x, pos.y, UTILS.randFloat(-Math.PI, Math.PI), plan.index, overrides);
             }
         }
@@ -198,9 +201,11 @@ export class Game {
             if (key) stats.animalKills[key] = (stats.animalKills[key] || 0) + 1;
         }
         if (ai.index === CRAB_KING) {
-            const winners = new Set([doer]);
+            // A departed participant may still be referenced by damageBy. Match the
+            // current player object, not its reusable sid, before granting credit.
+            const winners = new Set(this.players.includes(doer) ? [doer] : []);
             for (const [player, damage] of ai.damageBy) {
-                if (player.alive && damage >= ai.maxHealth * 0.05) winners.add(player);
+                if (this.players.includes(player) && player.alive && damage >= ai.maxHealth * 0.05) winners.add(player);
             }
             for (const player of winners) {
                 this.crabKillers.add(player.sid);
@@ -209,6 +214,9 @@ export class Game {
                     player.skins[HAT.CRAB_SHELL] = 1;
                     player.send("5", 0, HAT.CRAB_SHELL, 0);
                 }
+                // The profile collection survives the match. Recording at the award
+                // avoids depending on the recipient's later death/disconnection.
+                if (player.account && this.accounts) this.accounts.recordUnlocks(player.account, { hat: HAT.CRAB_SHELL });
             }
             this.server.broadcast("6", -1, `${doer.shownName(null)} defeated the Crab King!`);
             // other servers hear about it too ("The Crab King has fallen on <server> to <name>")
@@ -241,7 +249,8 @@ export class Game {
         }
         this.players.push(player);
         this.playersById.set(id, player);
-        player.send("A", { teams: this.clan_manager.list(), animals: ANIMAL_KINDS });
+        player.send("A", { teams: this.clan_manager.list(), animals: ANIMAL_KINDS, cave: this.object_manager.terrain });
+        this.syncAdminState(player, true);
         if (account && this.hooks.presence) this.hooks.presence(account, this.key);
         if (this.hooks.count) this.hooks.count(this.key, this.players.length);
         return player;
@@ -276,13 +285,17 @@ export class Game {
         player.disconnectedAt = 0;
         player.noMovTimer = 0;   // a reconnect is activity (also: invis hats must not hide the player from its own client)
         player.watchStats = -1;
+        player.keepInWorld(player.x, player.y);
         player.resuming = true;  // the client's "M" asks for a state resync, not a new life
+        const role = player.account ? player.account.role || null : null;
+        if (player.role !== role) this.updatePlayerRole(player, role);
         player.attrCache.clear();
         player.visiblePlayers.clear();
         player.visibleAis.clear();
         for (const other of this.players) delete other.sentTo[player.id];
         for (const object of this.game_objects) delete object.sentTo[player.id];
-        player.send("A", { teams: this.clan_manager.list(), animals: ANIMAL_KINDS });
+        player.send("A", { teams: this.clan_manager.list(), animals: ANIMAL_KINDS, cave: this.object_manager.terrain });
+        this.syncAdminState(player, true);
     }
 
     removePlayer(player) {
@@ -303,6 +316,8 @@ export class Game {
 
     onPlayerDeath(player) {
         this.recordLife(player, true);
+        player.resetPowers();
+        this.refreshPlayerData(player);
         this.leaderboardTimer = 0;
     }
 
@@ -332,7 +347,7 @@ export class Game {
         if (!player.account || !this.accounts) return;
         for (const [id, owned] of Object.entries(player.skins)) {
             const hat = hats.find(h => h.id === Number(id));
-            if (owned && hat && hat.price > 0) this.accounts.recordUnlocks(player.account, { hat: hat.id });
+            if (owned && hat && (hat.price > 0 || hat.earned)) this.accounts.recordUnlocks(player.account, { hat: hat.id });
         }
         for (const [id, owned] of Object.entries(player.tails)) {
             const acc = accessories.find(a => a.id === Number(id));
@@ -360,6 +375,40 @@ export class Game {
             }
         }
         return kicked;
+    }
+
+    setAccountRole(accountId, role) {
+        for (const player of this.players) {
+            if (player.account && player.account.id === accountId) this.updatePlayerRole(player, role);
+        }
+    }
+
+    updatePlayerRole(player, role) {
+        if (player.role === "admin" && role !== "admin") player.resetPowers();
+        player.role = role || null;
+        this.refreshPlayerData(player);
+        this.leaderboardTimer = 0;
+    }
+
+    // A is extensible init metadata. A partial update leaves catalogs intact and
+    // updates self through setData only, never through D's client spawn path.
+    syncAdminState(player, force = false) {
+        player.powers.godlike = player.powers.god && player.powers.aura ? 1 : 0;
+        const self = player.alive && !player.resuming && player.sentTo[player.id] ? player.getData(player) : null;
+        const admin = { role: player.role || null, active: Boolean(self), powers: { ...player.powers } };
+        // Position and current HP already have tick/damage packets. Only description
+        // attributes, role and powers invalidate this small metadata snapshot.
+        const key = JSON.stringify([admin, self && self.slice(7)]);
+        if (!force && player.adminStateKey === key) return;
+        player.adminStateKey = key;
+        player.send("A", { admin, self });
+    }
+
+    refreshPlayerData(player) {
+        for (const viewer of this.players) {
+            if (viewer !== player) delete player.sentTo[viewer.id];
+        }
+        this.syncAdminState(player, true);
     }
 
     setShadow(accountId, on) {
@@ -424,7 +473,9 @@ export class Game {
         if (sendStats) this.statsTimer = config.server.statsRate;
 
         for (const viewer of this.players) {
+            if (viewer.resuming) continue; // wait for M before any self-dependent world state
             this.syncPlayers(viewer);
+            this.syncAdminState(viewer);
             this.syncObjects(viewer);
             this.syncAnimals(viewer);
             if (sendMinimap) this.sendMinimap(viewer);
@@ -461,6 +512,7 @@ export class Game {
     // "a": [sid, x, y, dir*100] positions, [sid, buildIndex, weaponIndex, variant, team,
     // isLeader, skin, tail, icon, zIndex] attributes (only when changed), hidden sids.
     syncPlayers(viewer) {
+        if (viewer.resuming) return;
         const positions = [];
         const attrs = [];
         const hidden = [];

@@ -73,7 +73,7 @@ Referência comportamental: `moomoo-clone` com cliente 1.9.4 (`index-993d072d.js
 | Passivos vagam/esperam e só fogem após dano | `ai.js` | portada | 200 ticks sem fuga por proximidade; fuga por ~2 s após golpe; vaca fugiu no navegador. |
 | Hostis adquirem, perseguem, atacam e desistem | `ai.js` | portada | Lobo, carga, dano/knockback, perda de alvo e invisibilidade/bullRepel. |
 | 13 tipos ativos, drops, XP e respawn | `aiManager.js`, `server.js` | portada | 51 animais no mundo; suites de recompensa, Cow Cape, fixedSpawn/spawnDelay. |
-| MOOSTAFA, MOOFIE e Treasure | `aiManager.js`, `server.js` | portada | Tabela, arenas, dontRun/hitScare e recompensas. |
+| MOOSTAFA, MOOFIE e Treasure | `aiManager.js`, `server.js`, `shared/cave.js` | **adaptada** | Caverna compartilhada, guardiões confinados e proteção física; recompensas e atrasos de respawn preservados. |
 | Crab King: dive, slam, geysers, claws e recompensa | `ai.js`, `server.js` | portada | Padrões acionados na arena; abate deu +4000 ouro e respawn de ~600 s; Crab Shell equipado e visível. |
 | Rio, correnteza, plataforma e watrImm | `player.js`, `objectManager.js` | portada | Razões 0,33/0,75/0,4 medidas; plataforma remove penalidade. |
 | Neve e equipamentos de frio | `player.js`, `effects.js` | portada | 0,75, imunidade e Snowball 0,875. |
@@ -158,3 +158,20 @@ Referência comportamental: `moomoo-clone` com cliente 1.9.4 (`index-993d072d.js
 - Infraestrutura: app Node 20, MySQL 8.4 e Caddy em Docker Compose na EC2; imagem anterior preservada como `jagunco-app:pre-seal-fix`.
 - Evidências de navegador: `verification-shots/public-https-player-a.png` e `verification-shots/public-https-player-b.png` (artefatos locais de QA, não incluídos no pacote público).
 - Commit e versão de preview: registrados na entrega final da sessão.
+
+## Caverna do Jagunco
+
+A geometria em shared/cave.js alimenta a física e o catálogo enviado ao
+cliente. O cliente gerado desenha os mesmos limites. As paredes impedem
+movimento contínuo, separação por colisão, golpes e projéteis; a entrada
+sul permite entrada e recuo de personagens com raio de até 175 unidades.
+
+A proteção do Treasure é física, pelos guardiões. Não existe requisito
+de eliminar ambos para causar dano ao baú. O confinamento se aplica aos
+moradores naturais; animais administrativos reutilizados têm esse estado
+limpo. A recriação pelo console mantém as regras dos guardiões naturais.
+
+As regressões cobrem geração do mundo, entrada, paredes, cantos, alta
+velocidade, empurrões, ataques, construção, respawn e metadados de
+reconexão. scripts/verify-cave.mjs valida a aplicação compilada com
+entrada nativa em Chromium e Camoufox, além de touch CDP no Chromium.

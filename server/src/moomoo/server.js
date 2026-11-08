@@ -276,6 +276,7 @@ export class Game {
         player.disconnectedAt = 0;
         player.noMovTimer = 0;   // a reconnect is activity (also: invis hats must not hide the player from its own client)
         player.watchStats = -1;
+        player.role = player.account ? player.account.role || null : null;
         player.resuming = true;  // the client's "M" asks for a state resync, not a new life
         player.attrCache.clear();
         player.visiblePlayers.clear();
@@ -360,6 +361,12 @@ export class Game {
             }
         }
         return kicked;
+    }
+
+    setAccountRole(accountId, role) {
+        for (const player of this.players) {
+            if (player.account && player.account.id === accountId) player.role = role;
+        }
     }
 
     setShadow(accountId, on) {

@@ -30,7 +30,7 @@ for (const required of ["dist/boot.js", "dist/official/index.html", "dist/offici
 }
 console.log("Catalog and deploy-output assertions passed.");
 
-const suite = spawnSync(process.execPath, ["--test", "server/"], { cwd: ROOT, stdio: "inherit", env: process.env });
+const suite = spawnSync(process.execPath, [path.join(ROOT, "scripts/test-server.mjs")], { cwd: ROOT, stdio: "inherit", env: process.env });
 if (suite.error) throw suite.error;
 if (suite.status !== 0) process.exit(suite.status ?? 1);
 console.log("VERIFY OK: catalog, build outputs and the complete authoritative server suite passed.");

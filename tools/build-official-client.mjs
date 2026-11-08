@@ -55,7 +55,7 @@ const PATCHES = [
     },
     {
         name: "servers in the \"local\" region live on this host (/s/<key>)",
-        from: new RegExp(`function ${ID}\\(${ID}\\)\\{return \\.region==0\\?"localhost":`),
+        from: new RegExp(`function ${ID}\\(${ID}\\)\\{return \\2\\.region==0\\?"localhost":`),
         to: 'function $1($2){return $2.region=="local"?location.host+"/s/"+$2.key:'
     },
     {
@@ -85,22 +85,22 @@ const PATCHES = [
     },
     {
         name: "hide unsupported password-reset code link",
-        from: /fn\\(wa,"Forgot password\\?",p0\\)/,
+        from: /fn\(wa,"Forgot password\?",p0\)/,
         to: 'fn(wa,"",null)'
     },
     {
         name: "hide unsupported sign-up code link",
-        from: /fn\\(wa,"Use a code",p0\\)/,
+        from: /fn\(wa,"Use a code",p0\)/,
         to: 'fn(wa,"",null)'
     },
     {
         name: "show the in-game admin panel to admins",
-        from: /function X0\\(\\)\\{document\\.getElementById\\("adminButton"\\)\\.style\\.display="none"\\}/,
+        from: /function X0\(\)\{document\.getElementById\("adminButton"\)\.style\.display="none"\}/,
         to: 'function X0(){document.getElementById("adminButton").style.display=qe=="admin"?"":"none"}'
     },
     {
         name: "wire the in-game admin panel",
-        from: /const n=document\\.getElementById\\("adminButton"\\);n\\.onclick=u\\.checkTrusted\\(function\\(\\)\\{\\}\\),u\\.hookTouchEvents\\(n\\),/,
+        from: /const n=document\.getElementById\("adminButton"\);n\.onclick=u\.checkTrusted\(function\(\)\{\}\),u\.hookTouchEvents\(n\),/,
         to: 'const n=document.getElementById("adminButton");n.onclick=u.checkTrusted(function(){adminToggle()}),u.hookTouchEvents(n),'
     }
 ];
@@ -113,7 +113,7 @@ if (args.has("--no-anti-debug")) {
     });
 }
 
-function patchBundle(source) {
+export function patchBundle(source) {
     let out = source;
     for (const patch of PATCHES) {
         const global = new RegExp(patch.from.source, "g");
@@ -462,4 +462,4 @@ function main() {
     console.log(`done -> ${path.relative(ROOT, OUT)}`);
 }
 
-main();
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();

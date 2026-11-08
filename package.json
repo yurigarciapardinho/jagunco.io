@@ -8,8 +8,8 @@
     "build:touch": "node tools/build-touch-module.mjs",
     "start": "NODE_ENV=production node dist/boot.js",
     "start:source": "node server/src/index.js",
-    "test": "node --test server/",
-    "test:server": "node --test server/",
+    "test": "node scripts/test-server.mjs",
+    "test:server": "node scripts/test-server.mjs",
     "verify": "node scripts/verify-authoritative.mjs",
     "verify:mobile": "node scripts/verify-mobile.mjs",
     "format": "prettier --write ."

@@ -37,6 +37,8 @@ export class AI {
         this.isAI = true;
         this.nameIndex = UTILS.randInt(0, config.cowNames.length - 1);
 
+        let timerCount = 0;
+
         // INIT:
         this.init = function (x, y, dir, index, data) {
             this.x = x;
@@ -50,7 +52,7 @@ export class AI {
             this.dirPlus = 0;
             this.index = index;
             this.src = data.src;
-            if (data.name) this.name = data.name;
+            this.name = data.name;
             this.weightM = data.weightM;
             this.speed = data.speed;
             this.killScore = data.killScore;
@@ -81,9 +83,14 @@ export class AI {
             this.targetDir = 0;
             this.active = true;
             this.alive = true;
+            this.spawnCounter = 0;
+            this.despawnOnDeath = false;
+            this.lockMove = false;
+            this.animTime = 0;
             this.runFrom = null;
             this.chargeTarget = null;
             this.dmgOverTime = {};
+            timerCount = 0;
 
             // SERVER:
             this.boss = Boolean(data.boss);
@@ -94,10 +101,10 @@ export class AI {
             this.damageBy = new Map();
             this.bossAttack = null;
             this.bossCooldown = 3000;
+            this.nextAttack = null;
         };
 
         // UPDATE:
-        let timerCount = 0;
         this.update = function (delta) {
             if (this.active) {
 

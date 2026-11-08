@@ -246,7 +246,9 @@ export function createApiRouter({ store, moderation, servers, game, social, stre
     // ---------- moderation (staff) ----------
     router.post("/mod/role", (req, res) => {
         if (!requireStaff(req, res, ["admin"])) return;
-        if (!store.setRole(req.body.name, req.body.role)) return res.status(404).json({ error: "no player" });
+        const target = store.nameOwner(req.body.name);
+        if (!target || !store.setRole(target.name, req.body.role)) return res.status(404).json({ error: "no player" });
+        game.setAccountRole(target.id, target.role);
         res.json({});
     });
 

@@ -31,7 +31,10 @@ export function clearWorld(game) {
 
 // Deactivate every spawned animal so ai_manager.spawn() gives us fresh, controlled ones.
 export function clearAnimals(game) {
-    for (const ai of game.ais) ai.active = false;
+    for (const ai of game.ais) {
+        ai.active = false;
+        ai.alive = false;
+    }
 }
 
 // A spawned, alive player driven through the real Game.addPlayer + Player.spawn path.

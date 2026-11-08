@@ -107,6 +107,7 @@ for (const def of GAME_SERVERS) {
 const gameApi = {
     kickAccount: (id, reason) => [...games.values()].reduce((n, g) => n + g.kickAccount(id, reason), 0),
     setShadow: (id, on) => games.forEach(g => g.setShadow(id, on)),
+    setAccountRole: (id, role) => games.forEach(g => g.setAccountRole(id, role)),
     sessionFor: (id) => {
         for (const g of games.values()) {
             const s = g.sessionFor(id);

@@ -635,15 +635,14 @@ export class AdminConsole {
             return [`unbanned ${key}`];
         });
 
-        add("role", "role <account name> <admin|mod|none>", "staff role for a signed-in account (rejoin to apply)", (a) => {
+        add("role", "role <account name> <admin|mod|none>", "staff role for a signed-in account (applied immediately)", (a) => {
             const role = norm(a[a.length - 1]);
             const name = a.slice(0, -1).join(" ");
             if (!["admin", "mod", "none"].includes(role)) throw new Error("role <account name> <admin|mod|none>");
-            if (!this.accounts.setRole(name, role === "none" ? null : role)) throw new Error(`no account named "${name}" (they need to sign in and play once)`);
-            for (const { player } of this.allPlayers()) {
-                if (player.account && player.account.name === name) player.role = role === "none" ? null : role;
-            }
-            return [`${name} is now ${role}`];
+            const account = this.accounts.nameOwner(name);
+            if (!account || !this.accounts.setRole(account.name, role === "none" ? null : role)) throw new Error(`no account named "${name}" (they need to sign in and play once)`);
+            for (const game of this.games.values()) game.setAccountRole(account.id, account.role);
+            return [`${account.name} is now ${role}`];
         });
 
         add("flags", "flags <player>", "anticheat summary for a player", (a) => {

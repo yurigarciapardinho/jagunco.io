@@ -177,3 +177,10 @@ O código do servidor oficial do MooMoo não é público. A referência é o cli
 ## Licença e créditos
 
 Veja `LICENSE`, `MOOMOO_CLONE_LICENSE.md` e `CREDITS.md`. Fontes, bibliotecas e materiais de referência têm seus avisos preservados.
+
+## Contribuição
+
+Todas as alterações seguem a convenção de commits descrita em
+[CONTRIBUTING.md](CONTRIBUTING.md): títulos de até 50 caracteres e corpo
+com finalidade e validação. O histórico novo é verificado na integração
+contínua com npm run check:commits.

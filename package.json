@@ -15,6 +15,7 @@
     "format": "prettier --write .",
     "verify:admin": "node scripts/verify-admin-session.mjs",
     "verify:rewards:mysql": "node scripts/verify-rewards-mysql.mjs",
+    "check:commits": "node scripts/check-commits.mjs",
     "verify:cave": "node scripts/verify-cave.mjs"
   },
   "dependencies": {

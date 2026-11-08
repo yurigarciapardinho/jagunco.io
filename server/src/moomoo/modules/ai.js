@@ -102,6 +102,7 @@ export class AI {
             this.bossAttack = null;
             this.bossCooldown = 3000;
             this.nextAttack = null;
+            this.homeBounds = null;
         };
 
         // UPDATE:
@@ -125,6 +126,10 @@ export class AI {
                         } else {
                             this.x = this.startX || UTILS.randInt(0, config.mapScale);
                             this.y = this.startY || UTILS.randInt(0, config.mapScale);
+                        }
+                        if (!this.startX && !this.secret) {
+                            const safe = objectManager.outsideReservedSpawn(this.x, this.y, this.scale);
+                            this.x = safe.x; this.y = safe.y;
                         }
                     }
                     return;
@@ -166,7 +171,7 @@ export class AI {
                             let tmpDist;
                             let tmpCheck;
                             for (let i = 0; i < players.length; ++i) {
-                                if (players[i].alive && !(players[i].skin && players[i].skin.bullRepel) && !(players[i].powers && players[i].powers.invisible) && (!this.secret || players[i].x < 0)) {
+                                if (players[i].alive && !objectManager.terrainBlocksSegment(this.x, this.y, players[i].x, players[i].y) && !(players[i].skin && players[i].skin.bullRepel) && !(players[i].powers && players[i].powers.invisible) && (!this.secret || players[i].x < 0)) {
                                     tmpCheck = UTILS.getDistance(this.x, this.y, players[i].x, players[i].y);
                                     if (tmpCheck <= this.viewRange && (!tmpPlayer || tmpCheck < tmpDist)) {
                                         tmpDist = tmpCheck;
@@ -229,6 +234,7 @@ export class AI {
                     if (this.xVel) this.x += this.xVel * delta * tMlt;
                     if (this.yVel) this.y += this.yVel * delta * tMlt;
                     if (this.secret) this.keepInSecret(prevX, prevY);
+                    objectManager.resolveTerrain(this, prevX, prevY);
                     tmpList = objectManager.getGridArrays(this.x, this.y, this.scale);
                     for (let x = 0; x < tmpList.length; ++x) {
                         for (let y = 0; y < tmpList[x].length; ++y) {
@@ -254,7 +260,7 @@ export class AI {
                         for (let t = 0; t < tmpList.length; ++t) {
                             for (let x = 0; x < tmpList[t].length; ++x) {
                                 tmpObj = tmpList[t][x];
-                                if (tmpObj.health) {
+                                if (tmpObj.health && !objectManager.terrainBlocksSegment(this.x, this.y, tmpObj.x, tmpObj.y)) {
                                     tmpDst = UTILS.getDistance(this.x, this.y, tmpObj.x, tmpObj.y);
                                     if (tmpDst < tmpObj.scale + this.hitRange) {
                                         if (tmpObj.changeHealth(-this.dmg * 5)) objectManager.disableObj(tmpObj);
@@ -276,7 +282,7 @@ export class AI {
                     let tmpDir;
                     for (let i = 0; i < players.length; ++i) {
                         tmpObj = players[i];
-                        if (tmpObj && tmpObj.alive) {
+                        if (tmpObj && tmpObj.alive && !objectManager.terrainBlocksSegment(this.x, this.y, tmpObj.x, tmpObj.y)) {
                             tmpDst = UTILS.getDistance(this.x, this.y, tmpObj.x, tmpObj.y);
                             if (this.hitRange) {
                                 if (!this.hitWait && tmpDst <= this.hitRange + tmpObj.scale) {
@@ -429,6 +435,10 @@ export class AI {
                         this.x = this.startX || UTILS.randInt(0, config.mapScale);
                         this.y = this.startY || UTILS.randInt(0, config.mapScale);
                     }
+                    if (!this.startX && !this.secret && !this.spawnCounter) {
+                        const safe = objectManager.outsideReservedSpawn(this.x, this.y, this.scale);
+                        this.x = safe.x; this.y = safe.y;
+                    }
                     this.health = this.maxHealth;
                     this.runFrom = null;
                     this.damageBy.clear();
@@ -532,7 +542,7 @@ export class AI {
         // Damage every player caught by one telegraphed strike.
         this.landAttack = function (attack) {
             for (const player of players) {
-                if (!player.alive) continue;
+                if (!player.alive || objectManager.terrainBlocksSegment(this.x, this.y, player.x, player.y)) continue;
                 const inside = attack.kind == EFFECT_KIND.CLAW
                     ? distToSegment(player.x, player.y, attack.x, attack.y, attack.x2, attack.y2) <= attack.r + player.scale
                     : UTILS.getDistance(player.x, player.y, attack.x, attack.y) <= attack.r + player.scale;

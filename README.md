@@ -75,6 +75,7 @@ node scripts/verify-authoritative.mjs
 npm run build
 node scripts/verify-mobile.mjs
 npm run verify:admin             # cliente gerado, painel e reconexão em navegador
+npm run verify:cave              # caverna, guardiões, combate e touch real
 npm run verify:rewards:mysql     # recompensas, MySQL real e reinício; requer Docker
 ```
 
@@ -103,6 +104,27 @@ Botões e seletores mostram o estado confirmado pelo servidor, inclusive ao reab
 Poderes, multiplicadores e efeitos temporários do console duram a vida atual. Uma queda de conexão preserva esse estado por até 30 segundos; retomar nesse prazo mantém personagem, inventário, recursos, equipamentos e progressão. Morrer, iniciar outra vida ou deixar a janela expirar limpa os poderes. Reiniciar o servidor também inicia personagens novos; o cargo salvo na conta permanece.
 
 Perder o cargo de administrador remove imediatamente seus poderes atuais, fecha o painel e bloqueia novos comandos. Isso também vale para personagens com a conexão suspensa e para a troca de admin para mod. Recursos e equipamentos já concedidos seguem as regras normais da partida. O console do proprietário pode conceder efeitos a jogadores sem cargo; essas concessões também terminam na morte ou em uma nova vida e não dão acesso ao painel.
+
+## Gruta do Tesouro
+
+A caverna fica no noroeste da região verde, entre x=1400–3800 e
+y=2600–5000. A entrada ao sul tem 420 unidades de largura e centro em
+x=2600, y=4940. MOOSTAFA e MOOFIE guardam fisicamente o Treasure no
+interior. O baú pode ser atacado com os dois vivos.
+
+As paredes são terreno permanente: bloqueiam corpos, golpes e projéteis,
+não dão recursos e não ocupam limites de construção. A passagem e sua
+aproximação ficam livres de construções; árvores, pedras e spawns
+aleatórios não são gerados na área reservada. Construções comuns continuam
+permitidas nas demais áreas válidas, inclusive no piso interno.
+
+Os três moradores naturais permanecem no interior, inclusive sob empurrões.
+Invocações administrativas comuns não herdam esse confinamento. Após um
+abate, MOOSTAFA reaparece em 60 s, MOOFIE em 30 s e Treasure em 120 s,
+nos respectivos pontos da caverna. O Crab King mantém sua arena secreta.
+
+Servidor e cliente usam a mesma geometria; a reconexão reenvia essa
+definição.
 
 ## Recompensas de encontros
 

@@ -24,8 +24,9 @@ export function makeGame(t) {
     return game;
 }
 
-// Remove every generated world object (trees/rocks/gold) so placement/collision is deterministic.
+// Isolate object/weapon fixtures from generated resources and static cave terrain.
 export function clearWorld(game) {
+    game.object_manager.terrain = null;
     for (const obj of game.game_objects) if (obj.active) game.object_manager.disableObj(obj);
 }
 

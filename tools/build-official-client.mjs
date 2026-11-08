@@ -15,6 +15,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { applyJaguncoRendererPatch } from "./jagunco-renderer-patch.mjs";
+import { patchCaveClient } from "./cave-renderer-patch.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = path.join(ROOT, "client-official/source");
@@ -441,7 +442,7 @@ function main() {
     fs.mkdirSync(ASSETS, { recursive: true });
 
     const bundle = fs.readFileSync(path.join(SRC, files.index), "utf8");
-    const patched = applyJaguncoRendererPatch(patchAdminPanel(patchDeterministicSeal(patchBundle(bundle))));
+    const patched = applyJaguncoRendererPatch(patchCaveClient(patchAdminPanel(patchDeterministicSeal(patchBundle(bundle)))));
     fs.writeFileSync(path.join(ASSETS, files.index), patched);
     fs.copyFileSync(path.join(SRC, files.vendor), path.join(ASSETS, files.vendor));
     // main.css saved before this bundle doesn't style its newer parts (settings popup, chat,

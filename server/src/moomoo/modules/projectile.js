@@ -23,6 +23,7 @@ export class Projectile {
         var tmpObj;
         this.update = function(delta) {
             if (this.active) {
+                const previousX = this.x, previousY = this.y;
                 var tmpSpeed = this.speed * delta;
                 var tmpScale;
                 if (!this.skipMov) {
@@ -47,6 +48,15 @@ export class Projectile {
                         }
                     }
                     objectsHit.length = 0;
+                    let terrainHit = objectManager.traceTerrain(previousX, previousY, this.x, this.y);
+                    if (terrainHit) {
+                        this.x = terrainHit.x; this.y = terrainHit.y;
+                        tmpSpeed = 0;
+                    } else {
+                        terrainHit = objectManager.traceTerrain(this.x, this.y,
+                            this.x + tmpSpeed * Math.cos(this.dir), this.y + tmpSpeed * Math.sin(this.dir));
+                    }
+                    if (terrainHit) objectsHit.push({ x: terrainHit.x, y: terrainHit.y, isTerrain: true });
                     for (var i = 0; i < players.length + ais.length; ++i) {
                         tmpObj = players[i] || ais[i - players.length];
                         if (tmpObj.alive && tmpObj != this.owner && !(this.owner.team && tmpObj.team == this.owner.team)) {
@@ -78,7 +88,9 @@ export class Projectile {
                                 hitObj = objectsHit[i];
                             }
                         }
-                        if (hitObj.isPlayer || hitObj.isAI) {
+                        if (hitObj.isTerrain) {
+                            // Immutable world terrain has no owner, health or loot.
+                        } else if (hitObj.isPlayer || hitObj.isAI) {
                             var tmpSd = 0.3 * (hitObj.weightM || 1);
                             hitObj.xVel += tmpSd * Math.cos(this.dir);
                             hitObj.yVel += tmpSd * Math.sin(this.dir);

@@ -115,7 +115,8 @@ export class Game {
         const riverBottom = cfg.mapScale / 2 + cfg.riverWidth / 2;
         const pick = (list) => list[Math.floor(Math.random() * list.length)];
         const place = (x, y, scale, type, ignoreWater) => {
-            if (!this.object_manager.checkItemLocation(x, y, scale, 0.6, null, ignoreWater)) return false;
+            if (this.object_manager.isReservedSpawn(x, y, scale) ||
+                !this.object_manager.checkItemLocation(x, y, scale, 0.6, null, ignoreWater)) return false;
             this.object_manager.add(this.game_objects.length, x, y, 0, scale, type, undefined, false, null);
             return true;
         };
@@ -172,9 +173,10 @@ export class Game {
             let y = UTILS.randInt(type.scale, config.mapScale - type.scale);
             if (plan.area === "snow") y = UTILS.randInt(type.scale, config.snowBiomeTop - type.scale);
             if (plan.area === "river") y = UTILS.randInt(config.mapScale / 2 - config.riverWidth, config.mapScale / 2 + config.riverWidth);
-            if (this.object_manager.checkItemLocation(x, y, type.scale, 0.6, null, true)) return { x, y };
+            if (!this.object_manager.isReservedSpawn(x, y, type.scale) &&
+                this.object_manager.checkItemLocation(x, y, type.scale, 0.6, null, true)) return { x, y };
         }
-        return { x: UTILS.randInt(0, config.mapScale), y: UTILS.randInt(0, config.mapScale) };
+        return this.object_manager.outsideReservedSpawn(UTILS.randInt(0, config.mapScale), UTILS.randInt(0, config.mapScale), type.scale);
     }
 
     ensureAnimals() {
@@ -182,7 +184,8 @@ export class Game {
             const active = this.ais.filter(ai => ai.active && ai.index === plan.index && !ai.despawnOnDeath).length;
             for (let i = active; i < plan.desired; i++) {
                 const pos = this.animalPosition(plan);
-                const overrides = plan.index === CRAB_KING ? { spawnDelay: 10 * 60 * 1000 } : null;
+                const overrides = plan.index === CRAB_KING ? { spawnDelay: 10 * 60 * 1000 } : {};
+                if (plan.caveResident) overrides.homeBounds = config.bossCave.interior;
                 this.ai_manager.spawn(pos.x, pos.y, UTILS.randFloat(-Math.PI, Math.PI), plan.index, overrides);
             }
         }
@@ -246,7 +249,7 @@ export class Game {
         }
         this.players.push(player);
         this.playersById.set(id, player);
-        player.send("A", { teams: this.clan_manager.list(), animals: ANIMAL_KINDS });
+        player.send("A", { teams: this.clan_manager.list(), animals: ANIMAL_KINDS, cave: this.object_manager.terrain });
         this.syncAdminState(player, true);
         if (account && this.hooks.presence) this.hooks.presence(account, this.key);
         if (this.hooks.count) this.hooks.count(this.key, this.players.length);
@@ -282,6 +285,7 @@ export class Game {
         player.disconnectedAt = 0;
         player.noMovTimer = 0;   // a reconnect is activity (also: invis hats must not hide the player from its own client)
         player.watchStats = -1;
+        player.keepInWorld(player.x, player.y);
         player.resuming = true;  // the client's "M" asks for a state resync, not a new life
         const role = player.account ? player.account.role || null : null;
         if (player.role !== role) this.updatePlayerRole(player, role);
@@ -290,7 +294,7 @@ export class Game {
         player.visibleAis.clear();
         for (const other of this.players) delete other.sentTo[player.id];
         for (const object of this.game_objects) delete object.sentTo[player.id];
-        player.send("A", { teams: this.clan_manager.list(), animals: ANIMAL_KINDS });
+        player.send("A", { teams: this.clan_manager.list(), animals: ANIMAL_KINDS, cave: this.object_manager.terrain });
         this.syncAdminState(player, true);
     }
 

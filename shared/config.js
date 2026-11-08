@@ -167,6 +167,8 @@ var config = {
 
 // -------------------------------------------------------------------------------------
 // SERVER-ONLY TUNING (not part of the client bundle)
+config.bossCave = require("./cave.js").BOSS_CAVE;
+
 config.server = {
     // Trees / bushes are generated per area on an areaCount x areaCount grid; rocks and
     // gold are totals for the whole map.
@@ -181,9 +183,9 @@ config.server = {
         { index: 5, desired: 4, area: "river" },            // Quack
         { index: 9, desired: 4 },                           // Boar
         { index: 10, desired: 2, area: "snow" },            // Yeti
-        { index: 6, desired: 1, positions: [{ xRatio: 0.5, yRatio: 0.93 }] },   // MOOSTAFA (desert)
-        { index: 7, desired: 1, positions: [{ xRatio: 0.18, yRatio: 0.22 }] },  // Treasure
-        { index: 8, desired: 1, positions: [{ xRatio: 0.78, yRatio: 0.08 }] },  // MOOFIE (snow)
+        { index: 6, desired: 1, positions: [config.bossCave.spawns.moostafa], caveResident: true },
+        { index: 7, desired: 1, positions: [config.bossCave.spawns.treasure], caveResident: true },
+        { index: 8, desired: 1, positions: [config.bossCave.spawns.moofie], caveResident: true },
         { index: 11, desired: 1, area: "secret", positions: [{ x: -2500, y: 7200 }] }  // Crab King (the only crab in the game)
     ],
     cactusDamage: 20,

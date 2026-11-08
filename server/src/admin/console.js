@@ -328,7 +328,9 @@ export class AdminConsole {
                     if (!boss) {
                         const plan = config.server.animalSpawnPlan.find(p => p.index === index);
                         const pos = game.animalPosition(plan || { index });
-                        boss = game.ai_manager.spawn(pos.x, pos.y, 0, index, index === 11 ? { spawnDelay: 600000 } : null);
+                        const overrides = index === 11 ? { spawnDelay: 600000 } : {};
+                        if (plan?.caveResident) overrides.homeBounds = config.bossCave.interior;
+                        boss = game.ai_manager.spawn(pos.x, pos.y, 0, index, overrides);
                     }
                     boss.spawnCounter = 0;
                     boss.health = boss.maxHealth;

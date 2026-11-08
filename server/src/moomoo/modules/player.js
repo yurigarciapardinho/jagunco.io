@@ -12,6 +12,8 @@ const mathPOW = Math.pow;
 const mathSQRT = Math.sqrt;
 const mathABS = Math.abs;
 
+const defaultPowers = () => ({ god: 0, aura: 0, godlike: 0, boss: 0, invisible: 0, size: 1, power: 1, speed: 1, health: 1 });
+
 export class Player {
 
     constructor(id, sid, config, UTILS, projectileManager, objectManager, players, ais, items, hats, accessories, server, scoreCallback, iconCallback) {
@@ -59,7 +61,8 @@ export class Player {
         this.lifeStats = null;
         this.watchStats = -1;
         this.joinRequests = new Set();
-        this.powers = { god: 0, aura: 0, godlike: 0, boss: 0, invisible: 0, size: 1, power: 1, speed: 1, health: 1 };
+        this.powers = defaultPowers();
+        this.powerEpoch = 0;
         // SERVER: drawn as an animal (aiTypes index, -1 = no), dive state (0 surface,
         // 1 diving, 2 under, 3 coming up), shown with their clan as tribe tag, anonymous mode.
         this.morph = -1;
@@ -72,6 +75,7 @@ export class Player {
 
         // SPAWN:
         this.spawn = function (moofoll) {
+            this.resetPowers();
             this.active = true;
             this.alive = true;
             this.lockMove = false;
@@ -789,6 +793,21 @@ export class Player {
             const dx = mathABS(other.x - this.x) - other.scale;
             const dy = mathABS(other.y - this.y) - other.scale;
             return dx <= config.maxScreenWidth / 2 * 1.3 && dy <= config.maxScreenHeight / 2 * 1.3;
+        };
+
+        // Temporary administrative effects belong to one life. The epoch also
+        // retires delayed console effects when that life or its admin role ends.
+        this.resetPowers = function () {
+            this.powerEpoch++;
+            this.powers = defaultPowers();
+            this.morph = -1;
+            this.dive = 0;
+            this.disguised = false;
+            if (this.alive) this.applyPowers();
+            else {
+                this.scale = config.playerScale;
+                this.maxHealth = 100;
+            }
         };
 
         // SERVER: admin power multipliers (size / health) take effect immediately.

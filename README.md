@@ -74,6 +74,7 @@ node --test server/src/network/reconnection.test.js
 node scripts/verify-authoritative.mjs
 npm run build
 node scripts/verify-mobile.mjs
+npm run verify:admin             # cliente gerado, painel e reconexão em navegador
 ```
 
 Smoke operacional:
@@ -87,14 +88,20 @@ O console administrativo aceita comandos apenas por loopback e exige o token de 
 
 ### Administrador no jogo
 
-1. Crie entre com uma conta e escolha o nome do jogador.
+1. Entre com uma conta e escolha o nome do jogador.
 2. Conceda o cargo pelo e-mail do proprietário em `OWNER_EMAIL` ou pelo console:
 
 ```bash
 docker compose exec app node tools/console.mjs "role <nome-do-jogador> admin"
 ```
 
-3. Entre novamente na partida. Contas administradoras veem o botão **Admin**, com Godlike, imortalidade, aura, chefe, invisibilidade, multiplicadores, recursos e invocação de animais. O painel usa somente pacotes autorizados pelo servidor; convidados e contas comuns não recebem esses poderes.
+3. O cargo é aplicado imediatamente, inclusive para quem já está conectado. Contas administradoras na partida veem o botão **Admin**, com Godlike, imortalidade, aura, chefe, invisibilidade, multiplicadores, recursos e invocação de animais. Convidados, contas comuns e moderadores não têm acesso ao painel.
+
+Botões e seletores mostram o estado confirmado pelo servidor, inclusive ao reabrir o painel ou retomar a sessão. Godlike combina Imortal e Aura: desligar um desses componentes desmarca Godlike.
+
+Poderes, multiplicadores e efeitos temporários do console duram a vida atual. Uma queda de conexão preserva esse estado por até 30 segundos; retomar nesse prazo mantém personagem, inventário, recursos, equipamentos e progressão. Morrer, iniciar outra vida ou deixar a janela expirar limpa os poderes. Reiniciar o servidor também inicia personagens novos; o cargo salvo na conta permanece.
+
+Perder o cargo de administrador remove imediatamente seus poderes atuais, fecha o painel e bloqueia novos comandos. Isso também vale para personagens com a conexão suspensa e para a troca de admin para mod. Recursos e equipamentos já concedidos seguem as regras normais da partida. O console do proprietário pode conceder efeitos a jogadores sem cargo; essas concessões também terminam na morte ou em uma nova vida e não dão acesso ao painel.
 
 ## Arquitetura
 

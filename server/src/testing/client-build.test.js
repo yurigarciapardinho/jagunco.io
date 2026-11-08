@@ -17,14 +17,9 @@ test("client build routes local servers through this host", () => {
 test("client build exposes and wires the panel only for admins", () => {
     const patched = patchBundle(source);
     const visibility = patched.match(/function X0\(\)\{[^}]+\}/)[0];
-    for (const role of ["admin", "mod", null]) {
-        const button = { style: {} };
-        vm.runInNewContext("(" + visibility + ")()", {
-            qe: role,
-            document: { getElementById: () => button }
-        });
-        assert.equal(button.style.display, role === "admin" ? "" : "none");
-    }
+    let updates = 0;
+    vm.runInNewContext("(" + visibility + ")()", { adminUpdateAccess: () => updates++ });
+    assert.equal(updates, 1);
     assert.ok(patched.includes("n.onclick=u.checkTrusted(function(){adminToggle()})"));
     assert.ok(!patched.includes('fn(wa,"Forgot password?",p0)'));
     assert.ok(!patched.includes('fn(wa,"Use a code",p0)'));

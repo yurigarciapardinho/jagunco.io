@@ -434,10 +434,11 @@ export class AdminConsole {
             const { game, player } = this.findPlayer(a[0]);
             const seconds = Math.min(30, Math.max(1, Number(a[1]) || 4));
             const godBefore = player.powers.god;
+            const powerEpoch = player.powerEpoch;
             const steps = [[1, 700, 0], [2, 0, 700], [3, 1650, 700 + seconds * 1000], [0, 0, 2350 + seconds * 1000]];
             for (const [state, ms, at] of steps) {
                 setTimeout(() => {
-                    if (!game.players.includes(player)) return;
+                    if (!game.players.includes(player) || !player.alive || player.powerEpoch !== powerEpoch) return;
                     game.setDive(player, state, ms);
                     if (state === 1) player.powers.god = 1;
                     if (state === 0) player.powers.god = godBefore;
@@ -694,10 +695,8 @@ export class AdminConsole {
         return C;
     }
 
-    // Re-send player data to everyone else (size / aura / boss flags changed).
+    // Refresh observers and the recipient without respawning the recipient's client.
     resend(game, player) {
-        for (const viewer of game.players) {
-            if (viewer !== player) delete player.sentTo[viewer.id];
-        }
+        game.refreshPlayerData(player);
     }
 }

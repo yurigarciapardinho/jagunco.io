@@ -161,12 +161,13 @@ async function makeStack(t, { graceMs = GRACE_MS, gameKeys = ["T1"] } = {}) {
         port: wss.address().port,
         clients: []
     };
-    t.after(() => {
+    t.after(async () => {
         for (const client of stack.clients) {
             try { client.ws.terminate(); } catch {}
         }
-        wss.close();
+        await new Promise(resolve => wss.close(resolve));
         for (const game of games.values()) game.stop();
+        await accounts.closePersistence();
         fs.rmSync(dir, { recursive: true, force: true });
     });
     return stack;
@@ -225,6 +226,10 @@ test("resume over real WebSockets: same player, sid, position, resources, items,
     player.addResource(3, 5000);       // points (gold)
     player.kills = 3;
     player.addItem(4);                 // stone wall
+    player.weapons = [5, 9];
+    player.weaponXP[5] = 8000;
+    player.skins[7] = 1;
+    player.tails[3] = 1;
     game.object_manager.add(game.game_objects.length, 2150, 2000, 0, WOOD_WALL.scale, WOOD_WALL.type, WOOD_WALL, false, player);
     const building = game.game_objects.find(o => o.active && o.owner === player);
     assert.ok(building, "building placed");
@@ -250,6 +255,7 @@ test("resume over real WebSockets: same player, sid, position, resources, items,
     // The fresh client asks to spawn; it must get the current state back.
     b.sendPacket("M", { name: "Lampiao", moofoll: false, skin: 0 });
     const [, cArgs] = await b.waitFor("C");
+    await waitUntil(() => b.find("A").some(p => p[1][0].admin?.active), "complete resumed snapshot");
     assert.equal(cArgs[0], sid, "same sid — no respawn, no new identity");
 
     // Resources / points / kills exactly as before (nothing reset, nothing doubled).
@@ -260,6 +266,10 @@ test("resume over real WebSockets: same player, sid, position, resources, items,
     const vItems = b.find("V").map(p => p[1]).find(args => args[1] === 0);
     assert.deepEqual(vItems[0], player.items, "item list resynced");
     assert.ok(player.items.includes(4), "the extra item was kept");
+    assert.deepEqual(b.find("V").find(p => p[1][1] === 1)[1][0], [5, 9], "upgraded weapons resynced");
+    assert.equal(player.weaponXP[5], 8000, "weapon progression preserved");
+    assert.ok(b.find("5").some(p => p[1][0] === 0 && p[1][1] === 7 && p[1][2] === 0), "owned hat resynced");
+    assert.ok(b.find("5").some(p => p[1][0] === 0 && p[1][1] === 3 && p[1][2] === 1), "owned tail resynced");
     const uPacket = b.last("U");
     assert.ok(uPacket, "upgrade state resent");
     assert.equal(uPacket[1][0], player.upgradePoints);
@@ -273,6 +283,11 @@ test("resume over real WebSockets: same player, sid, position, resources, items,
     assert.equal(selfData[3], 2000, "position x preserved");
     assert.equal(selfData[4], 2000, "position y preserved");
     assert.equal(dArgs[1], true, "marked as the client's own player");
+    const ownIndex = b.packets.findIndex(p => p[0] === "D" && p[1][1] === true);
+    for (const name of ["N", "T", "U", "V"]) {
+        assert.ok(b.packets.findIndex(p => p[0] === name) > ownIndex, name + " must follow own D");
+    }
+    assert.equal(b.find("D").filter(p => p[1][1] === true).length, 1, "own spawn occurs once");
     const [, hArgs] = await b.waitFor("H");
     assert.ok(hArgs[0].includes(building.sid), "building re-loaded for the fresh client");
 

@@ -242,6 +242,7 @@ export class Game {
         this.players.push(player);
         this.playersById.set(id, player);
         player.send("A", { teams: this.clan_manager.list(), animals: ANIMAL_KINDS });
+        this.syncAdminState(player, true);
         if (account && this.hooks.presence) this.hooks.presence(account, this.key);
         if (this.hooks.count) this.hooks.count(this.key, this.players.length);
         return player;
@@ -276,14 +277,16 @@ export class Game {
         player.disconnectedAt = 0;
         player.noMovTimer = 0;   // a reconnect is activity (also: invis hats must not hide the player from its own client)
         player.watchStats = -1;
-        player.role = player.account ? player.account.role || null : null;
         player.resuming = true;  // the client's "M" asks for a state resync, not a new life
+        const role = player.account ? player.account.role || null : null;
+        if (player.role !== role) this.updatePlayerRole(player, role);
         player.attrCache.clear();
         player.visiblePlayers.clear();
         player.visibleAis.clear();
         for (const other of this.players) delete other.sentTo[player.id];
         for (const object of this.game_objects) delete object.sentTo[player.id];
         player.send("A", { teams: this.clan_manager.list(), animals: ANIMAL_KINDS });
+        this.syncAdminState(player, true);
     }
 
     removePlayer(player) {
@@ -304,6 +307,8 @@ export class Game {
 
     onPlayerDeath(player) {
         this.recordLife(player, true);
+        player.resetPowers();
+        this.refreshPlayerData(player);
         this.leaderboardTimer = 0;
     }
 
@@ -365,8 +370,36 @@ export class Game {
 
     setAccountRole(accountId, role) {
         for (const player of this.players) {
-            if (player.account && player.account.id === accountId) player.role = role;
+            if (player.account && player.account.id === accountId) this.updatePlayerRole(player, role);
         }
+    }
+
+    updatePlayerRole(player, role) {
+        if (player.role === "admin" && role !== "admin") player.resetPowers();
+        player.role = role || null;
+        this.refreshPlayerData(player);
+        this.leaderboardTimer = 0;
+    }
+
+    // A is extensible init metadata. A partial update leaves catalogs intact and
+    // updates self through setData only, never through D's client spawn path.
+    syncAdminState(player, force = false) {
+        player.powers.godlike = player.powers.god && player.powers.aura ? 1 : 0;
+        const self = player.alive && !player.resuming && player.sentTo[player.id] ? player.getData(player) : null;
+        const admin = { role: player.role || null, active: Boolean(self), powers: { ...player.powers } };
+        // Position and current HP already have tick/damage packets. Only description
+        // attributes, role and powers invalidate this small metadata snapshot.
+        const key = JSON.stringify([admin, self && self.slice(7)]);
+        if (!force && player.adminStateKey === key) return;
+        player.adminStateKey = key;
+        player.send("A", { admin, self });
+    }
+
+    refreshPlayerData(player) {
+        for (const viewer of this.players) {
+            if (viewer !== player) delete player.sentTo[viewer.id];
+        }
+        this.syncAdminState(player, true);
     }
 
     setShadow(accountId, on) {
@@ -431,7 +464,9 @@ export class Game {
         if (sendStats) this.statsTimer = config.server.statsRate;
 
         for (const viewer of this.players) {
+            if (viewer.resuming) continue; // wait for M before any self-dependent world state
             this.syncPlayers(viewer);
+            this.syncAdminState(viewer);
             this.syncObjects(viewer);
             this.syncAnimals(viewer);
             if (sendMinimap) this.sendMinimap(viewer);
@@ -468,6 +503,7 @@ export class Game {
     // "a": [sid, x, y, dir*100] positions, [sid, buildIndex, weaponIndex, variant, team,
     // isLeader, skin, tail, icon, zIndex] attributes (only when changed), hidden sids.
     syncPlayers(viewer) {
+        if (viewer.resuming) return;
         const positions = [];
         const attrs = [];
         const hidden = [];

@@ -12,7 +12,8 @@
     "test:server": "node scripts/test-server.mjs",
     "verify": "node scripts/verify-authoritative.mjs",
     "verify:mobile": "node scripts/verify-mobile.mjs",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "verify:admin": "node scripts/verify-admin-session.mjs"
   },
   "dependencies": {
     "bad-words": "^4.1.5",

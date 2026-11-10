@@ -29,5 +29,5 @@ arquivos de evidência com credenciais.
 
 Preserve os avisos de licença e atribuição existentes. Altere o cliente
 gerado pelos patches do construtor, com contagem explícita dos anchors.
-Valide o runtime de produção em Node 20 e a compatibilidade em Node 24.
+Valide o runtime de produção em Node 26 e a compatibilidade em Node 24.
 Uma publicação no GitHub não autoriza, por si só, um deploy em produção.

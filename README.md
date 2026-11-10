@@ -18,7 +18,7 @@ A matriz de origem, adaptações, estado e evidências está em `PARITY.md`.
 
 ## Executar
 
-Requer Node.js 20 ou superior.
+Produção: Node.js 26.13.0 LTS. A CI também verifica compatibilidade com Node 24.22.2 ou superior na linha 24.
 
 ```bash
 npm ci

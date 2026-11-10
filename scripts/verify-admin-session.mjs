@@ -220,12 +220,22 @@ try {
         assert.equal((await panelState(page)).godlike, 0);
         assert.equal((await panelState(page)).aura, 1);
         await power(page, "god", "Imortal", true);
+        // The real world can damage the player while immortality is disabled.
+        // Health multipliers preserve that ratio; establish full health once
+        // before testing them rather than assuming the random world was idle.
+        await consoleCommand("heal " + OWNER);
+        const baseline = await ownerLine();
+        assert.ok(baseline.includes("hp 100/100"), "full-health fixture: " + baseline);
         await power(page, "boss", "Chefe", true);
         await power(page, "invisible", "Invisível", true);
         for (const [key, label, value] of [["size", "Tamanho", 2], ["power", "Poder", 5], ["speed", "Velocidade", 2], ["health", "Vida", 5]]) {
             await multiplier(page, key, label, value);
         }
-        assert.ok((await ownerLine()).includes("hp 500/500"));
+        const authoritative = await until(async () => {
+            const line = await ownerLine();
+            return line.includes("hp 500/500") && line;
+        }, "authoritative health multiplier");
+        assert.ok(authoritative.includes("hp 500/500"), authoritative);
         const state = await panelState(page);
         await page.locator(".adminClose").click();
         assert.equal(await page.locator("#adminMenu").isVisible(), false);

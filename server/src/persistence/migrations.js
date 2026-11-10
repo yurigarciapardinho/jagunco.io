@@ -274,5 +274,13 @@ export const MIGRATIONS = [
         statements: [
             `ALTER TABLE migration_meta MODIFY mkey VARCHAR(64) NOT NULL`
         ]
+    },
+    {
+        name: "0004_private_control",
+        statements: [
+            `CREATE TABLE IF NOT EXISTS control_state (entity_key VARCHAR(160) PRIMARY KEY, revision BIGINT NOT NULL, payload JSON NOT NULL) ENGINE=InnoDB`,
+            `CREATE TABLE IF NOT EXISTS control_operations (operation_id CHAR(36) PRIMARY KEY, payload_hash CHAR(64) NOT NULL, type VARCHAR(32) NOT NULL, actor VARCHAR(32) NOT NULL, reason VARCHAR(240) NOT NULL, target_json JSON NOT NULL, status VARCHAR(16) NOT NULL, result_json JSON NOT NULL, created_at BIGINT NOT NULL, finished_at BIGINT NULL, KEY ix_control_at(created_at)) ENGINE=InnoDB`,
+            `CREATE TABLE IF NOT EXISTS control_telemetry (seq BIGINT AUTO_INCREMENT PRIMARY KEY, event_id CHAR(36) UNIQUE NOT NULL, at BIGINT NOT NULL, kind VARCHAR(32) NOT NULL, payload JSON NOT NULL, KEY ix_telemetry_at(at)) ENGINE=InnoDB`
+        ]
     }
 ];

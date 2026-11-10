@@ -15,6 +15,8 @@ export class WriteQueue {
         this.errors = 0;
         this.lastError = null;
         this.draining = null;
+        this.fenced = false;
+        this.resumeWaiters = [];
     }
 
     // key: coalescing key (e.g. "store", "chat", "bans"); job: async () => void
@@ -28,13 +30,30 @@ export class WriteQueue {
             return;
         }
         this.pending.set(key, job);
-        if (!this.running) this.draining = this.#drain();
+        if (!this.running && !this.fenced) this.draining = this.#drain();
+    }
+
+    // Critical commands cannot coalesce and must receive their own failure.
+    runExclusive(job) {
+        if (this.closed) return Promise.reject(new Error("queue_closed"));
+        return new Promise((resolve, reject) => {
+            this.enqueue(Symbol("command"), async () => {
+                try { resolve(await job()); } catch (error) { reject(error); }
+            });
+        });
+    }
+
+    pause() { this.fenced = true; }
+    resume() {
+        this.fenced = false;
+        this.resumeWaiters.splice(0).forEach(resolve => resolve());
+        if (this.pending.size && !this.running) this.draining = this.#drain();
     }
 
     async #drain() {
         this.running = true;
         try {
-            while (this.pending.size) {
+            while (this.pending.size && !this.fenced) {
                 const [key, job] = this.pending.entries().next().value;
                 this.pending.delete(key);
                 try {
@@ -53,6 +72,7 @@ export class WriteQueue {
     // Wait until everything queued so far (and anything queued while draining) is written.
     async flush() {
         for (;;) {
+            if (this.fenced) await new Promise(resolve => this.resumeWaiters.push(resolve));
             if (this.draining) await this.draining;
             if (!this.pending.size && !this.running) return;
         }

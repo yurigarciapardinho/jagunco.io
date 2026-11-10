@@ -59,7 +59,7 @@ for (const typed of ["CaseAdmin", "caseadmin", "CASEADMIN"]) {
     });
 }
 
-test("HTTP role changes update live and suspended players and enforce staff authorization", async t => {
+test("HTTP role changes refuse promotion even for an authenticated admin", async t => {
     const f = await fixture(t);
     const app = express();
     app.use("/api", createApiRouter({
@@ -77,20 +77,12 @@ test("HTTP role changes update live and suspended players and enforce staff auth
     const url = "http://127.0.0.1:" + server.address().port + "/api/mod/role";
     const post = body => fetch(url, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
-    let response = await post({ auth: f.store.issueToken(f.owner), name: "caseadmin", role: "mod" });
-    assert.equal(response.status, 200);
-    assert.equal(f.live.role, "mod");
-    assert.equal(f.suspended.role, "mod");
-    response = await post({ auth: f.store.issueToken(f.owner), name: "CASEADMIN", role: null });
-    assert.equal(response.status, 200);
-    assert.equal(f.live.role, null);
-    assert.equal(f.suspended.role, null);
-
-    response = await post({ auth: f.store.issueToken(f.account), name: "ControlAdmin", role: null });
-    assert.equal(response.status, 403);
-    assert.equal(f.owner.role, "admin");
-    response = await post({ auth: f.store.issueToken(f.owner), name: "MissingAccount", role: "admin" });
-    assert.equal(response.status, 404);
+    for (const token of [f.store.issueToken(f.owner), f.store.issueToken(f.account), "invalid"]) {
+        const response = await post({ auth: token, name: "CaseAdmin", role: "mod" });
+        assert.equal(response.status, 403);
+        assert.equal(f.live.role, "admin");
+        assert.equal(f.suspended.role, "admin");
+    }
 });
 
 test("resuming a player refreshes the current account role", async t => {

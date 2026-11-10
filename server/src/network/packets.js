@@ -402,6 +402,8 @@ export function handlePacket(ctx, player, name, args) {
 function handleAdmin(ctx, admin, args) {
     const { game } = ctx;
     const [command, a, b, c] = args;
+    admin.adminSession=true;
+    game.telemetry?.("admin_request", { accountId: admin.account?.id, staff: true, sessionId: admin.id, lifeId: admin.lifeId, command: String(command).slice(0,32), source: "gameplay" });
     const targetFor = (sid) => sid == null ? admin : game.players.find(p => p.sid === sid && p.alive);
 
     if (ADMIN_POWERS.includes(command)) {

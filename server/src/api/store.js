@@ -69,7 +69,7 @@ export class AccountStore {
             throw new Error("APP_SECRET must be set in production (it signs the account tokens)");
         } else {
             const secretFile = path.join(dataDir, "secret.key");
-            if (!fs.existsSync(secretFile)) fs.writeFileSync(secretFile, randomBytes(32).toString("hex"));
+            if (!fs.existsSync(secretFile)) fs.writeFileSync(secretFile, randomBytes(32).toString("hex"), { mode: 0o600 });
             this.secret = Buffer.from(fs.readFileSync(secretFile, "utf8").trim(), "hex");
         }
         this.data = { accounts: {}, emails: {}, names: {}, clans: {}, social: { friends: {}, requests: [] }, legacyIds: {} };

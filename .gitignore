@@ -60,3 +60,14 @@ build/
 coverage/
 .nyc_output/
 .playwright-cli/
+
+# Deployment state and environment variants
+.env.*
+!.env.example
+.secrets/
+.ops/
+backups/
+.vendor/
+
+__pycache__/
+*.pyc

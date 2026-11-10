@@ -1,3 +1,4 @@
+import { ControlService } from "./control/service.js";
 // SERVER ENTRY
 // One HTTP server that plays the role of every moomoo.io host the official client talks to:
 //   /                    the game page (official client, import map -> current protocol build)
@@ -10,6 +11,7 @@
 //   /img, /css, ...      static game assets
 
 import "dotenv/config";
+import { loadFileSecrets, validatePurpose } from "./config/runtime.js";
 import express from "express";
 import path from "node:path";
 import fs from "node:fs";
@@ -30,13 +32,16 @@ import { createConnectionHandler } from "./network/connection.js";
 import { AdminConsole } from "./admin/console.js";
 import { randomBytes, timingSafeEqual } from "node:crypto";
 
+loadFileSecrets();
+validatePurpose();
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // BUNDLED is true when this file is dist/boot.js (built by scripts/build-clone.mjs):
 // the project root is then the parent of dist/, and static game assets come from
 // dist/public (a copy of client/public made at build time) instead of the source tree.
 const BUNDLED = path.basename(__dirname) === "dist";
 const ROOT = path.resolve(__dirname, BUNDLED ? ".." : "../..");
-const OFFICIAL_DIR = path.join(ROOT, "dist/official");
+const OFFICIAL_DIR = process.env.OFFICIAL_CLIENT_DIR ? path.resolve(process.env.OFFICIAL_CLIENT_DIR) : path.join(ROOT, "dist/official");
 const PUBLIC_DIR = BUNDLED ? path.join(ROOT, "dist/public") : path.join(ROOT, "client/public");
 // DATA_DIR: run a second copy (tests, a staging copy) without sharing accounts / bans with this one
 const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.join(ROOT, "server/data");
@@ -58,7 +63,7 @@ const log = (msg) => console.log(`${new Date().toISOString().slice(11, 19)} ${ms
 const pinFile = process.env.PROTOCOL_BUILD_FILE || path.join(DATA_DIR, "protocol-build.json");
 if (process.env.ROTATE_BUILD && fs.existsSync(pinFile)) fs.rmSync(pinFile);
 const build = await createProtocolBuild({
-    outDir: path.join(ROOT, "dist/protocol"),
+    outDir: process.env.PROTOCOL_OUTPUT_DIR ? path.resolve(process.env.PROTOCOL_OUTPUT_DIR) : path.join(DATA_DIR, "protocol"),
     pinFile
 });
 const accounts = new AccountStore(DATA_DIR);
@@ -87,22 +92,24 @@ const bundle = new ClientBundle(path.join(OFFICIAL_DIR, "assets"), { transform: 
 const stream = new PageStream({ store: accounts, bundle, log });
 let chat = null;
 const gameHooks = {
+    telemetry: (kind, data) => control.emit(kind, data),
     presence: (account, server) => chat && chat.presence(account, server),
     count: (server, n) => stream.broadcast("count", { server, n }),
     event: (data) => stream.broadcast("event", data)
 };
 
-// Owner convenience: OWNER_EMAIL=<email> makes that account an admin.
-if (process.env.OWNER_EMAIL) {
-    const owner = accounts.accountForEmail(process.env.OWNER_EMAIL);
-    owner.role = "admin";
-    accounts.save();
-}
+// Owner convenience is now a durable one-time bootstrap.
+const manifestFile=path.join(ROOT,"dist/control-assets/renderer-manifest.json");
+const assetManifest=fs.existsSync(manifestFile)?JSON.parse(fs.readFileSync(manifestFile,"utf8")):null;
+const control = new ControlService({ accounts, dataDir: DATA_DIR, log, assetManifest });
+await control.ready();
 
 const games = new Map();
 for (const def of GAME_SERVERS) {
-    games.set(def.key, new Game({ key: def.key, name: def.key, capacity: def.capacity, membersOnly: def.membersOnly, accounts, log, hooks: gameHooks }));
+    games.set(def.key, new Game({ key: def.key, name: def.key, capacity: def.capacity, membersOnly: def.membersOnly, accounts, log, hooks: gameHooks, worldMap: control.mapFor(def.key), ruleProvider: () => control.rulesFor(def.key) }));
 }
+
+await control.start(games);
 
 const gameApi = {
     kickAccount: (id, reason) => [...games.values()].reduce((n, g) => n + g.kickAccount(id, reason), 0),
@@ -158,7 +165,7 @@ const servers = {
 
 // Admin console (tools/console.mjs). Local requests with the token from server/data/admin.token only.
 const tokenFile = path.join(DATA_DIR, "admin.token");
-if (!fs.existsSync(tokenFile)) fs.writeFileSync(tokenFile, randomBytes(24).toString("hex"));
+if (!fs.existsSync(tokenFile)) fs.writeFileSync(tokenFile, randomBytes(24).toString("hex"), { mode: 0o600 });
 const ADMIN_TOKEN = Buffer.from(fs.readFileSync(tokenFile, "utf8").trim());
 const adminConsole = new AdminConsole({ games, accounts, moderation, build, dataDir: DATA_DIR, log, social, stream, chat, baseUrl: `http://${["0.0.0.0", "127.0.0.1", "::1", "::"].includes(HOST) ? "localhost" : HOST}:${PORT}` });
 
@@ -223,6 +230,19 @@ app.get("/s/:key/ping", (req, res) => {
     res.type("text").send("ok");
 });
 
+app.get("/health", (_req, res) => res.status(200).json({ status: "alive" }));
+app.get("/ready", async (_req, res) => {
+    try {
+        if (stopping || accounts.persistence.queue?.fenced) throw new Error("stopping or reconciling");
+        if (accounts.persistence.mode === "mysql") {
+            await accounts.persistence.pool.query({ sql: "SELECT 1", timeout: 1500 });
+        }
+        res.set("Cache-Control", "no-store").json({ status: "ready", persistence: accounts.persistence.mode });
+    } catch {
+        res.status(503).json({ status: "unavailable" });
+    }
+});
+
 app.get("/ping", (_req, res) => {
     res.json({
         status: "ok",
@@ -262,6 +282,8 @@ let stopping = false;
 const shutdown = () => {
     if (stopping) return;
     stopping = true;
+    setTimeout(()=>process.exit(1),12000).unref();
+    void control.close();
     games.forEach(g => g.announceShutdown(3));
     setTimeout(() => games.forEach(g => g.closeAll()), 1100);
     setTimeout(() => {

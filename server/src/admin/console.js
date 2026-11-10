@@ -639,6 +639,7 @@ export class AdminConsole {
         });
 
         add("role", "role <account name> <admin|mod|none>", "staff role for a signed-in account (applied immediately)", (a) => {
+            if (process.env.CONTROL_SOCKET) throw new Error("Use a central privada para alterar cargos");
             const role = norm(a[a.length - 1]);
             const name = a.slice(0, -1).join(" ");
             if (!["admin", "mod", "none"].includes(role)) throw new Error("role <account name> <admin|mod|none>");

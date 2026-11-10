@@ -126,8 +126,11 @@ function adminRender() {
     }
 
     adminElement("div", "adminTitle", "Recursos", holder);
+    const resources = adminElement("div", "adminResources", null, holder);
+    resources.style.cssText = "display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin:8px 0";
     ["Madeira", "Comida", "Pedra", "Ouro"].forEach(function (label, index) {
-        const button = adminElement("span", "adminBtn", "+10 mil " + label, holder);
+        const button = adminElement("span", "adminBtn", "+10 mil " + label, resources);
+        button.style.cssText = "display:block;white-space:normal;margin:0;text-align:center;padding:8px 4px";
         button.onclick = u.checkTrusted(function () { adminSend("give", index, 10000); });
     });
 

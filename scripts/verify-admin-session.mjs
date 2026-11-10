@@ -292,7 +292,9 @@ try {
             method: "POST", signal: AbortSignal.timeout(5000), headers: { "content-type": "application/json" },
             body: JSON.stringify({ auth: seeds.SessionControl.token, name: "SESSIONOWNER", role: "admin" })
         });
-        assert.equal(response.status, 200);
+        assert.equal(response.status, 403, "public API cannot grant roles");
+        assert.equal(await page.locator("#adminButton").isVisible(), false);
+        await consoleCommand("role SESSIONOWNER admin");
         await page.locator("#adminButton").waitFor({ state: "visible" });
         assert.deepEqual(await panelState(page), defaults);
         assert.deepEqual(await inventoryView(page), expectedInventory);

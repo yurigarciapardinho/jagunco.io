@@ -126,6 +126,7 @@ export class MySqlPersistence {
                         applied = []; // meta table does not exist yet (first ever boot)
                     }
                     if (applied.length) continue;
+                    if (process.env.MIGRATE_ON_BOOT === "0") throw new Error("persistence: schema requires the operator migration job");
                     if (typeof batch.run === "function") {
                         await batch.run(this.pool);
                     } else {
@@ -173,6 +174,7 @@ export class MySqlPersistence {
                 this.migrated.add(domain);
                 return;
             }
+            if (process.env.MIGRATE_ON_BOOT === "0") throw new Error("persistence: initial import requires the operator migration job");
             await this.db.transaction(async (tx) => {
                 if (domain === "store") {
                     const data = this.#readJsonFile(this.files.accounts);

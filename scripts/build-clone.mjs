@@ -51,7 +51,7 @@ await esbuild.build({
     entryPoints: [path.join(ROOT, "server/src/index.js")],
     outfile: path.join(DIST, "boot.js"),
     platform: "node",
-    target: "node20",
+    target: "node24",
     format: "esm",
     bundle: true,
     // optional native ws addons: ws works (slower) without them
@@ -64,6 +64,14 @@ await esbuild.build({
     logLevel: "info"
 });
 
+// Operator helper has no application bootstrap or database access.
+await esbuild.build({ entryPoints: [path.join(ROOT, "server/src/operations/init-data.js")],
+    outfile: path.join(DIST, "init-data.js"), platform: "node", target: "node24", format: "esm", bundle: true });
+
+await esbuild.build({ entryPoints: [path.join(ROOT, "server/src/operations/migrate.js")],
+    outfile: path.join(DIST, "migrate.js"), platform: "node", target: "node24", format: "esm", bundle: true,
+    banner: { js: "import {createRequire} from 'node:module';const require=createRequire(import.meta.url);" } });
+
 // ---------------------------------------------------------------- static assets
 console.log("== static assets ==");
 // dist/boot.js is ESM; the root package.json is CommonJS (shared/ config is CJS)
@@ -74,6 +82,10 @@ fs.cpSync(path.join(ROOT, "client/public"), PUBLIC_OUT, { recursive: true, deref
 // the Jagunco fonts only live in the top-level public/; overlay it (art is the same
 // files that are already in client/public/art)
 fs.cpSync(path.join(ROOT, "public"), PUBLIC_OUT, { recursive: true, dereference: false });
+
+// Preserve the project's existing distribution notice in the runtime image.
+fs.mkdirSync(path.join(DIST, "legal"), { recursive: true });
+fs.copyFileSync(path.join(ROOT, "LICENSE"), path.join(DIST, "legal/LICENSE"));
 
 // ---------------------------------------------------------------- sanity check
 for (const required of ["boot.js", "official/index.html", "official/assets", "official/assets/index-d71d2980.js", "public/img", "public/manifest.json"]) {

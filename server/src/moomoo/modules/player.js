@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 // PLAYER
 // Port of the Player class shipped in the official client bundle ([wu]). Shared
 // functions keep the client's logic line for line; additions that only exist on the
@@ -75,6 +76,7 @@ export class Player {
 
         // SPAWN:
         this.spawn = function (moofoll) {
+            this.lifeId = randomUUID();
             this.resetPowers();
             this.active = true;
             this.alive = true;
@@ -133,7 +135,8 @@ export class Player {
                 healing: 0, animals: 0, bosses: 0, score: this.points, animalKills: {}, bossKills: 0
             };
             this.applyPowers();
-            const spawnPoint = objectManager.fetchSpawnObj(this.sid);
+            const authored=this.authoringSpawn?.();
+            const spawnPoint = objectManager.fetchSpawnObj(this.sid) || (authored?[authored.x,authored.y]:null);
             if (spawnPoint) {
                 this.x = spawnPoint[0];
                 this.y = spawnPoint[1];
@@ -536,8 +539,9 @@ export class Player {
         };
 
         // ADD RESOURCE:
-        this.addResource = function (type, amount, auto) {
+        this.addResource = function (type, amount, auto, gathered) {
             if (config.unlimitedResources && amount < 0) return;
+            if (amount > 0 && gathered && this.resourceMultiplier) amount = Math.round(amount * this.resourceMultiplier());
             if (!auto && amount > 0) this.addWeaponXP(amount);
             if (type == 3) {
                 scoreCallback(this, amount, true);
@@ -666,7 +670,7 @@ export class Player {
                                 } else {
                                     this.earnXP(4 * items.weapons[this.weaponIndex].gather);
                                     const count = items.weapons[this.weaponIndex].gather + (tmpObj.type == 3 ? 4 : 0) + gatherBonus(this, tmpObj.type);
-                                    this.addResource(tmpObj.type, count);
+                                    this.addResource(tmpObj.type, count, false, true);
                                     if (this.skin && this.skin.extraGold) this.addResource(3, 1);
                                 }
                                 hitSomething = true;

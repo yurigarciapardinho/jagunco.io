@@ -1,9 +1,10 @@
+import controlContract from "../../../shared/control-contract.js";
 // GAME
 // One running game world (a "server" in the client's server picker). Owns the players,
 // animals, objects and projectiles and sends the per-tick state with the packet layouts
 // the official client expects.
 
-import { createHash } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
 import { Player } from "./modules/player.js";
 import { UTILS } from "./libs/utils.js";
 import { config } from "./config.js";
@@ -44,8 +45,11 @@ export class Game {
     game_objects = [];
 
     // hooks: { presence(account, serverKey | ""), count(serverKey, n), event(data) }
-    constructor({ key, name, capacity, membersOnly, accounts, log, hooks }) {
+    constructor({ key, name, capacity, membersOnly, accounts, log, hooks, worldMap, ruleProvider }) {
         this.key = key;
+        this.instanceId = randomUUID();
+        this.worldMap = worldMap || null;
+        this.ruleProvider = ruleProvider || (() => ({ gather: 1, animalReward: 1 }));
         this.name = name;
         this.capacity = capacity;
         this.membersOnly = membersOnly;
@@ -56,7 +60,7 @@ export class Game {
         this.crownsAt = 0;
         this.log = log || ((msg) => console.log(`[${key}] ${msg}`));
         this.playersById = new Map();
-        this.sids = new Array(config.maxPlayersHard).fill(true);
+        this.sids = new Array(capacity + 10).fill(true);
         this.crabKillers = new Set();
         this.shutdownAt = 0;
 
@@ -91,8 +95,8 @@ export class Game {
         this.clan_manager = new ClanManager(this.players, this.server);
         this.ai_manager = new AiManager(this.ais, this.players, items, this.object_manager, config, UTILS, this.scoreCallback, this.server, {
             onKill: (ai, doer) => this.onAnimalKilled(ai, doer),
-            killScore: (ai, doer) => ai.index == COW && doer && hasTail(doer, TAIL.COW_CAPE) ? Math.round(ai.killScore * EFFECT.cowCapeMult) : ai.killScore,
-            dropAmount: (ai, doer, amount) => ai.index == COW && hasTail(doer, TAIL.COW_CAPE) ? Math.round(amount * EFFECT.cowCapeMult) : amount,
+            killScore: (ai, doer) => ai.index == COW && doer && hasTail(doer, TAIL.COW_CAPE) ? Math.round(ai.killScore * EFFECT.cowCapeMult * this.ruleProvider().animalReward) : Math.round(ai.killScore * this.ruleProvider().animalReward),
+            dropAmount: (ai, doer, amount) => ai.index == COW && hasTail(doer, TAIL.COW_CAPE) ? Math.round(amount * EFFECT.cowCapeMult * this.ruleProvider().animalReward) : Math.round(amount * this.ruleProvider().animalReward),
             respawnAt: (ai) => ai.secret ? this.randomSecretPoint(ai.scale) : null
         });
 
@@ -110,6 +114,16 @@ export class Game {
     // ------------------------------------------------------------------ world
     generateWorld() {
         const cfg = config;
+        if (this.worldMap) {
+            const checked = controlContract.validateMap(this.worldMap);
+            if (!checked.valid) throw new Error("Invalid world map: " + JSON.stringify(checked.errors.slice(0, 3)));
+            for (const o of checked.map.objects) {
+                const data = o.kind === "building" ? items.list[o.item] : undefined;
+                this.object_manager.add(this.game_objects.length, o.x, o.y, o.dir, o.scale, controlContract.kinds[o.kind] ?? 0, data, false, null);
+                this.game_objects[this.game_objects.length - 1].authoringId = o.id;
+            }
+            return;
+        }
         const areaSize = cfg.mapScale / cfg.areaCount;
         const riverTop = cfg.mapScale / 2 - cfg.riverWidth / 2;
         const riverBottom = cfg.mapScale / 2 + cfg.riverWidth / 2;
@@ -180,18 +194,29 @@ export class Game {
     }
 
     ensureAnimals() {
-        for (const plan of config.server.animalSpawnPlan) {
-            const active = this.ais.filter(ai => ai.active && ai.index === plan.index && !ai.despawnOnDeath).length;
+        for (const plan of this.animalPlan()) {
+            const planKey = plan.positions ? JSON.stringify([plan.index, plan.positions[0]]) : "type:" + plan.index;
+            const active = this.ais.filter(ai => ai.active && ai.index === plan.index && !ai.despawnOnDeath && (!this.worldMap || ai.authoringPlan === planKey)).length;
             for (let i = active; i < plan.desired; i++) {
                 const pos = this.animalPosition(plan);
                 const overrides = plan.index === CRAB_KING ? { spawnDelay: 10 * 60 * 1000 } : {};
                 if (plan.caveResident) overrides.homeBounds = config.bossCave.interior;
-                this.ai_manager.spawn(pos.x, pos.y, UTILS.randFloat(-Math.PI, Math.PI), plan.index, overrides);
+                const ai = this.ai_manager.spawn(pos.x, pos.y, UTILS.randFloat(-Math.PI, Math.PI), plan.index, overrides);
+                if (ai) ai.authoringPlan = planKey;
             }
         }
     }
 
+    telemetry(kind, data) { this.hooks.telemetry?.(kind, { ...data, server: this.key, instanceId: this.instanceId }); }
+
+    animalPlan() {
+        if (!this.worldMap) return config.server.animalSpawnPlan;
+        const fixed = config.server.animalSpawnPlan.filter(p => p.caveResident || p.index === CRAB_KING);
+        return [...fixed, ...(this.worldMap.encounters || []).map(e => ({ index: e.index, desired: 1, positions: [e] }))];
+    }
+
     onAnimalKilled(ai, doer) {
+        this.telemetry("animal_kill", { animal: ai.index, accountId: doer?.account?.id, staff: !!doer?.role, reward: Math.round(ai.killScore * this.ruleProvider().animalReward) });
         if (!doer || !doer.isPlayer) return;
         const key = ANIMAL_KEYS[ai.index];
         const stats = doer.lifeStats;
@@ -232,9 +257,12 @@ export class Game {
         id = id || UTILS.randomString(16);
         const player = new Player(id, sid, config, UTILS, this.projectile_manager, this.object_manager, this.players, this.ais, items, hats, accessories, this.server, this.scoreCallback, this.iconCallback);
         player.send = send;
+        player.resourceMultiplier = () => this.ruleProvider().gather;
+        player.authoringSpawn=()=>{const candidates=(this.worldMap?.spawns||[]).filter(s=>this.object_manager.checkItemLocation(s.x,s.y,player.scale,.6,null,true));return candidates.length?candidates[Math.floor(Math.random()*candidates.length)]:null;};
         player.ip = ip;
         player.ipHash = createHash("sha256").update(String(ip)).digest("hex").slice(0, 12);
         player.connectedAt = Date.now();
+        this.telemetry("session_start", { accountId: account?.id || null, sessionId: id, staff: !!account?.role, createdAt: account?.createdAt });
         player.reports = 0;
         player.visiblePlayers = new Set();
         player.visibleAis = new Set();
@@ -263,6 +291,7 @@ export class Game {
     // invulnerability comes with being disconnected.
     suspendPlayer(player) {
         player.disconnectedAt = Date.now();
+        this.telemetry("suspend", { accountId: player.account?.id, sessionId: player.id });
         player.resetMoveDir();
         player.mouseState = 0;
         player.hits = 0;
@@ -279,6 +308,7 @@ export class Game {
     // touched: same player object, sid, position, resources, items and buildings, and
     // nobody else re-learns about this player (its sentTo stays).
     rejoinPlayer(player, { send, ip }) {
+        this.telemetry("reconnect", { accountId: player.account?.id, sessionId: player.id, staff: !!player.role || !!player.adminSession });
         player.send = send;
         player.ip = ip;
         player.ipHash = createHash("sha256").update(String(ip)).digest("hex").slice(0, 12);
@@ -301,6 +331,7 @@ export class Game {
     removePlayer(player) {
         const index = this.players.indexOf(player);
         if (index < 0) return;
+        this.telemetry("session_end", { accountId: player.account?.id, sessionId: player.id, staff: !!player.role || !!player.adminSession, durationMs: Date.now() - player.connectedAt });
         this.recordLife(player, false);
         this.clan_manager.leaveTribe(player);
         this.clan_manager.forget(player);
@@ -327,6 +358,7 @@ export class Game {
             return;
         }
         const life = player.lifeStats;
+        this.telemetry("life_end", { accountId: player.account.id, sessionId: player.id, lifeId: player.lifeId, staff: !!player.role || !!player.adminSession, died, durationMs: Date.now() - player.spawnedAt, kills: life.kills, gold: life.gold, wood: life.wood, food: life.food, stone: life.stone });
         life.died = died;
         life.playtime = Date.now() - player.spawnedAt;
         life.look = { hat: player.skinIndex || 0, acc: player.tailIndex || 0, weapon: player.weaponIndex || 0, variant: player.variant().id, color: player.skinColor || 0 };
@@ -433,9 +465,11 @@ export class Game {
 
     // ------------------------------------------------------------------ loop
     tick() {
+        const tickStart = performance.now();
         const now = Date.now();
         const delta = now - this.lastTick;
         this.lastTick = now;
+        this.tickInterval = delta;
 
         for (const player of this.players) {
             player.chatCooldown -= delta;
@@ -481,6 +515,8 @@ export class Game {
             if (sendMinimap) this.sendMinimap(viewer);
             if (sendStats && viewer.watchStats >= 0) this.sendStats(viewer, viewer.watchStats);
         }
+        (this.tickSamples ||= []).push(performance.now() - tickStart);
+        if (this.tickSamples.length > 900) this.tickSamples.shift();
     }
 
     updateLeaders() {

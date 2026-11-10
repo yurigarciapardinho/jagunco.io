@@ -89,13 +89,13 @@ export async function createProtocolBuild({ outDir, pinFile }) {
         // builds pinned before seals existed get one without rolling the build
         if (!/^[0-9a-f]{32}$/.test(params.sealHex || "")) {
             params.sealHex = randomBytes(16).toString("hex");
-            fs.writeFileSync(pinFile, JSON.stringify(params, null, 2));
+            fs.writeFileSync(pinFile, JSON.stringify(params, null, 2), { mode: 0o600 });
         }
     } else {
         params = randomParams();
         if (pinFile) {
             fs.mkdirSync(path.dirname(pinFile), { recursive: true });
-            fs.writeFileSync(pinFile, JSON.stringify(params, null, 2));
+            fs.writeFileSync(pinFile, JSON.stringify(params, null, 2), { mode: 0o600 });
         }
     }
 

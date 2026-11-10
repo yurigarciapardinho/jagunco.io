@@ -12,3 +12,9 @@ admin.token
 *.crt
 *.p12
 verification-shots
+
+.secrets
+.ops
+backups
+*.sql
+research

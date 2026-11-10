@@ -244,12 +244,8 @@ export function createApiRouter({ store, moderation, servers, game, social, stre
     });
 
     // ---------- moderation (staff) ----------
-    router.post("/mod/role", (req, res) => {
-        if (!requireStaff(req, res, ["admin"])) return;
-        const target = store.nameOwner(req.body.name);
-        if (!target || !store.setRole(target.name, req.body.role)) return res.status(404).json({ error: "no player" });
-        game.setAccountRole(target.id, target.role);
-        res.json({});
+    router.post("/mod/role", (_req, res) => {
+        res.status(403).json({ error: "Cargos são gerenciados exclusivamente pela central do dono" });
     });
 
     // Staff panel on a profile: {name} for accounts, {id} for guests (the id comes with

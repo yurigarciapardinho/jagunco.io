@@ -26,7 +26,7 @@ Architectures: $TASK_ARCH
 Signed-By: /etc/apt/keyrings/docker.asc
 SOURCES
 apt-get update
-TASK_DOCKER_VERSION=$(apt-cache madison docker-ce | awk '$3 ~ /^5:29\./ {print $3;exit}')
+TASK_DOCKER_VERSION=$(apt-cache madison docker-ce | awk '$3 ~ /^5:29\./ && !found {print $3;found=1}')
 if [[ -z "$TASK_DOCKER_VERSION" ]]; then echo 'Docker 29 não encontrado no repositório oficial.' >&2; exit 1; fi
 apt-get install -y --no-install-recommends "docker-ce=$TASK_DOCKER_VERSION" "docker-ce-cli=$TASK_DOCKER_VERSION" containerd.io docker-buildx-plugin docker-compose-plugin
 systemctl enable --now docker

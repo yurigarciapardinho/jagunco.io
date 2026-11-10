@@ -1,0 +1,13 @@
+services:
+  app:
+    environment:
+      CONTROL_SOCKET: /run/jagunco-control/control.sock
+      CONTROL_SECRET_FILE: /run/secrets/control_secret
+    secrets: [control_secret]
+    volumes: [control-socket:/run/jagunco-control]
+  init-data:
+    volumes: [control-socket:/run/jagunco-control]
+secrets:
+  control_secret: {file: ./.secrets/control_secret}
+volumes:
+  control-socket: {external: true, name: '${CONTROL_VOLUME:-jagunco_control-socket}'}

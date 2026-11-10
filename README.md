@@ -2,6 +2,16 @@
 
 Survival multiplayer 2D ambientado no sertão. O servidor é autoritativo e usa o núcleo funcional do clone anexado do MooMoo 1.9.4, com apresentação, identidade, autenticação, persistência e operação próprias do Jagunco. Não há conexão com servidores oficiais do MooMoo ou da FRVR.
 
+## Operação privada e contêineres
+
+A instalação reproduzível usa imagens prontas, segredos por arquivo e
+migrador separado. Consulte [instalação e recuperação](docs/operations/containers.md),
+[contrato da central privada](docs/operations/control-contract.md) e
+[poderes e recompensas](docs/operations/admin.md).
+
+A central do dono é uma aplicação separada, acessível por túnel SSH. O
+jogo sozinho continua instalável sem acesso ao repositório privado.
+
 ## Conteúdo e sistemas
 
 - Mundo de 14.400 × 14.400 unidades, rio com correnteza, neve, deserto e área secreta com arena.
@@ -23,7 +33,7 @@ Produção: Node.js 26.13.0 LTS. A CI também verifica compatibilidade com Node 
 ```bash
 npm ci
 npm run build
-npm start
+npm run start:source
 ```
 
 Abra `http://localhost:3000`. O build gera:
@@ -49,22 +59,26 @@ APP_SECRET=<valor-longo-e-aleatorio>
 DATABASE_URL=mysql://usuario:senha@host:3306/jagunco
 ```
 
-Contas, credenciais, preferências, perfis, estatísticas, amigos, clãs, chat e moderação são hidratados no boot e persistidos em 24 tabelas relacionais. As escritas são assíncronas e enfileiradas fora do loop da partida; o desligamento faz flush antes de encerrar. Sem `DATABASE_URL` ou `APP_SECRET`, o boot de produção falha explicitamente em vez de apresentar arquivos locais como persistência.
+Contas, credenciais, preferências, perfis, estatísticas, amigos, clãs, chat e moderação são hidratados no boot e persistidos em tabelas relacionais. As escritas são assíncronas e enfileiradas fora do loop da partida; o desligamento faz flush antes de encerrar. Sem `DATABASE_URL` ou `APP_SECRET`, o boot de produção falha explicitamente em vez de apresentar arquivos locais como persistência.
 
 A partida transitória continua em memória. Uma queda de WebSocket tem 30 segundos de grace para retomar a mesma sessão, posição, recursos e construções sem duplicação; kick e ban não retomam. Isso não é apresentado como persistência integral do mundo após reinício.
 
 ### Docker Compose
 
-O Compose inclui aplicação, MySQL 8.4 com volume e Caddy nas portas 80/443:
+O Compose inclui app sem privilégios, migrador separado, MySQL e Caddy.
+Construa a imagem fora da EC2 e use os instaladores:
 
 ```bash
-cp .env.example .env
-# Preencha APP_SECRET, MYSQL_PASSWORD e MYSQL_ROOT_PASSWORD no .env.
-# Opcional: OWNER_EMAIL=<seu-email> promove essa conta a administradora.
-docker compose up -d --build
+docker build -t jagunco-game:<revisao> .
+sudo scripts/install.sh --directory /opt/jagunco \
+  --image jagunco-game:<revisao> --control
 ```
 
-Somente o Caddy é exposto. O banco e a aplicação ficam na rede interna. `game-data` guarda apenas o pin do protocolo e o token administrativo local; os dados sociais ficam em `mysql-data`.
+O instalador gera arquivos de segredo, provisiona usuários SQL distintos e
+prepara volumes. Consulte [operação em contêineres](docs/operations/containers.md)
+para instalar, adotar a EC2 existente, atualizar, fazer backup e restaurar.
+Somente Caddy publica portas em produção. O perfil de desenvolvimento
+publica o app em loopback. O conector privado é opcional e usa Unix socket.
 
 ## Testes e verificação
 
@@ -91,11 +105,9 @@ O console administrativo aceita comandos apenas por loopback e exige o token de 
 ### Administrador no jogo
 
 1. Entre com uma conta e escolha o nome do jogador.
-2. Conceda o cargo pelo e-mail do proprietário em `OWNER_EMAIL` ou pelo console:
-
-```bash
-docker compose exec app node tools/console.mjs "role <nome-do-jogador> admin"
-```
+2. Configure OWNER_EMAIL para o bootstrap inicial ou conceda o cargo pela
+central privada do dono. A API pública de promoção de cargos é fechada.
+OWNER_EMAIL é aplicado uma vez; uma despromoção posterior permanece no banco.
 
 3. O cargo é aplicado imediatamente, inclusive para quem já está conectado. Contas administradoras na partida veem o botão **Admin**, com Godlike, imortalidade, aura, chefe, invisibilidade, multiplicadores, recursos e invocação de animais. Convidados, contas comuns e moderadores não têm acesso ao painel.
 
@@ -103,7 +115,7 @@ Botões e seletores mostram o estado confirmado pelo servidor, inclusive ao reab
 
 Poderes, multiplicadores e efeitos temporários do console duram a vida atual. Uma queda de conexão preserva esse estado por até 30 segundos; retomar nesse prazo mantém personagem, inventário, recursos, equipamentos e progressão. Morrer, iniciar outra vida ou deixar a janela expirar limpa os poderes. Reiniciar o servidor também inicia personagens novos; o cargo salvo na conta permanece.
 
-Perder o cargo de administrador remove imediatamente seus poderes atuais, fecha o painel e bloqueia novos comandos. Isso também vale para personagens com a conexão suspensa e para a troca de admin para mod. Recursos e equipamentos já concedidos seguem as regras normais da partida. O console do proprietário pode conceder efeitos a jogadores sem cargo; essas concessões também terminam na morte ou em uma nova vida e não dão acesso ao painel.
+Perder o cargo de administrador remove imediatamente seus poderes atuais, fecha o painel e bloqueia novos comandos. Isso também vale para personagens com a conexão suspensa e para a troca de admin para mod. Recursos e equipamentos já concedidos seguem as regras normais da partida. A central do proprietário pode conceder efeitos a jogadores sem cargo; essas concessões também terminam na morte ou em uma nova vida e não dão acesso ao painel.
 
 ## Gruta do Tesouro
 

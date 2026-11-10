@@ -1,57 +1,92 @@
 services:
   db:
-    image: mysql:8.4
+    image: ${MYSQL_IMAGE:-mysql:8.4.13@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902}
     restart: unless-stopped
     environment:
       MYSQL_DATABASE: jagunco
-      MYSQL_USER: jagunco
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?defina MYSQL_PASSWORD no .env}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?defina MYSQL_ROOT_PASSWORD no .env}
-    volumes:
-      - mysql-data:/var/lib/mysql
+      MYSQL_USER: jagunco_boot
+      MYSQL_PASSWORD_FILE: /run/secrets/db_boot_password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/db_root_password
+    secrets: [db_root_password, db_boot_password]
+    volumes: [mysql-data:/var/lib/mysql]
+    networks: [data]
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "--silent"]
+      test: [CMD, mysqladmin, ping, -h, 127.0.0.1, --silent]
       interval: 5s
       timeout: 5s
       retries: 30
-      start_period: 20s
-
+      start_period: 30s
+    logging: &logs
+      driver: json-file
+      options: {max-size: 10m, max-file: '3'}
   app:
-    build: .
+    image: ${GAME_IMAGE:?execute install.sh com uma imagem validada}
     restart: unless-stopped
     environment:
       NODE_ENV: production
-      PORT: 3000
       HOST: 0.0.0.0
+      PORT: 3000
       APP_ID: jagunco-standalone
-      APP_SECRET: ${APP_SECRET:?defina APP_SECRET no .env}
+      APP_SECRET_FILE: /run/secrets/app_secret
+      DATABASE_URL_FILE: /run/secrets/game_database_url
+      DATA_DIR: /app/server/data
+      PROTOCOL_OUTPUT_DIR: /app/server/data/protocol
+      MIGRATE_ON_BOOT: '0'
       OWNER_EMAIL: ${OWNER_EMAIL:-}
-      DATABASE_URL: mysql://jagunco:${MYSQL_PASSWORD}@db:3306/jagunco
-    expose:
-      - "3000"
-    volumes:
-      # Protocol build pin and the loopback-only admin token. Social data lives in MySQL.
-      - game-data:/app/server/data
+    secrets: [app_secret, game_database_url]
+    volumes: [game-data:/app/server/data]
+    networks: [front, data]
     depends_on:
-      db:
-        condition: service_healthy
-
+      db: {condition: service_healthy}
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+      start_period: 30s
+    logging: *logs
+  migrate:
+    image: ${GAME_IMAGE:?defina GAME_IMAGE}
+    profiles: [tools]
+    command: [node, dist/migrate.js]
+    environment:
+      MIGRATION_DATABASE_URL_FILE: /run/secrets/game_migration_url
+      DATA_DIR: /app/server/data
+    secrets: [game_migration_url]
+    volumes: [game-data:/app/server/data]
+    networks: [data]
+    restart: 'no'
+    logging: *logs
+  init-data:
+    image: ${GAME_IMAGE:?defina GAME_IMAGE}
+    profiles: [tools]
+    user: '0:0'
+    command: [node, dist/init-data.js]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, FOWNER]
+    read_only: true
+    volumes: [game-data:/app/server/data, control-socket:/run/jagunco-control]
+    network_mode: none
+    restart: 'no'
   caddy:
-    image: caddy:2-alpine
+    image: ${CADDY_IMAGE:-caddy:2.11.9-alpine@sha256:0bbb055bda6793c999bde78b1b5ce3e89f829fb031af2cf50056ea1246559fee}
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data/caddy
-      - caddy-config:/config/caddy
-    depends_on:
-      - app
-
+    ports: ['80:80', '443:443', '443:443/udp']
+    volumes: ['./Caddyfile:/etc/caddy/Caddyfile:ro', 'caddy-data:/data/caddy', 'caddy-config:/config/caddy']
+    networks: [front]
+    logging: *logs
+secrets:
+  db_root_password: {file: ./.secrets/db_root_password}
+  db_boot_password: {file: ./.secrets/db_boot_password}
+  app_secret: {file: ./.secrets/app_secret}
+  game_database_url: {file: ./.secrets/game_database_url}
+  game_migration_url: {file: ./.secrets/game_migration_url}
 volumes:
-  game-data:
-  mysql-data:
-  caddy-data:
-  caddy-config:
+  control-socket: {external: true, name: '${CONTROL_VOLUME:-jagunco_control-socket}'}
+  mysql-data: {external: true, name: '${MYSQL_VOLUME:-jagunco_mysql-data}'}
+  game-data: {external: true, name: '${GAME_VOLUME:-jagunco_game-data}'}
+  caddy-data: {external: true, name: '${CADDY_DATA_VOLUME:-jagunco_caddy-data}'}
+  caddy-config: {external: true, name: '${CADDY_CONFIG_VOLUME:-jagunco_caddy-config}'}
+networks:
+  front: {external: true, name: '${FRONT_NETWORK:-jagunco_front}'}
+  data: {external: true, name: '${DATA_NETWORK:-jagunco_data}'}

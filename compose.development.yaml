@@ -1,0 +1,5 @@
+services:
+  app:
+    ports: ['127.0.0.1:${DEV_PORT:-3300}:3000']
+  caddy:
+    profiles: [public-proxy]

@@ -1,47 +1,166 @@
 name: CI
-
-on:
-  push:
-  pull_request:
-
 permissions:
   contents: read
-
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   commits:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    outputs:
+      bootstrap: ${{ steps.messages.outputs.bootstrap }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-        with:
-          fetch-depth: 0
-          ref: ${{ github.event.pull_request.head.sha || github.sha }}
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: 26
-          package-manager-cache: false
-      - name: Verificar mensagens novas
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: |
-          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
-            BASE_SHA=$(git merge-base "origin/$DEFAULT_BRANCH" HEAD)
-          fi
-          node scripts/check-commits.mjs --from "$BASE_SHA" --to HEAD
-
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+      with:
+        node-version-file: .node-version
+        package-manager-cache: false
+    - name: Verificar mensagens novas
+      id: messages
+      env:
+        BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+        DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      run: |
+        if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+          BASE_SHA=$(git merge-base "origin/$DEFAULT_BRANCH" HEAD)
+        fi
+        node scripts/check-commits.mjs --from "$BASE_SHA" --to HEAD
+        node scripts/check-pr.mjs
+        if git diff --quiet "$BASE_SHA" HEAD -- scripts/bootstrap-host.sh scripts/verify-host-bootstrap.py .github/workflows/ci.yml; then
+          echo 'bootstrap=false' >> "$GITHUB_OUTPUT"
+        else
+          echo 'bootstrap=true' >> "$GITHUB_OUTPUT"
+        fi
   runtime:
-    runs-on: ubuntu-latest
+    needs:
+    - commits
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
     strategy:
+      fail-fast: false
       matrix:
-        node: [24, 26]
+        node:
+        - 24.22.3
+        - 26.13.1
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
-        with:
-          node-version: ${{ matrix.node }}
-          cache: npm
-          package-manager-cache: false
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
-      - run: npm run verify
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+      with:
+        node-version: ${{ matrix.node }}
+        cache: npm
+        package-manager-cache: false
+    - run: npm ci
+    - run: npm run build
+    - run: npm run verify
+    - run: npm audit
+  acceptance:
+    needs:
+    - commits
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+      with:
+        node-version-file: .node-version
+        package-manager-cache: false
+    - run: npm ci
+    - run: npx playwright install --only-shell chromium
+    - name: Construir o Dockerfile público
+      run: docker build --build-arg VCS_REF="$GITHUB_SHA" -t jagunco-game:ci .
+    - name: Recuperar o build para QA
+      run: |
+        id=$(docker create jagunco-game:ci)
+        trap 'docker rm "$id" >/dev/null' EXIT
+        docker cp "$id:/app/dist" dist
+    - name: Verificar gameplay e navegador
+      run: |
+        npm run verify:admin
+        npm run verify:cave
+        npm run verify:mobile
+    - name: Verificar recompensas com MySQL
+      env:
+        MYSQL_IMAGE: mysql:8.4.13@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902
+      run: |
+        docker pull "$MYSQL_IMAGE"
+        npm run verify:rewards:mysql
+    - name: Instalar sem central e recuperar
+      run: python3 scripts/verify-installation.py --image jagunco-game:ci --directory "$RUNNER_TEMP/game-installation"
+  bootstrap:
+    needs:
+    - commits
+    if: ${{ needs.commits.outputs.bootstrap == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        persist-credentials: false
+    - name: Instalar Docker ausente em VM descartável
+      env:
+        RUNNER_ENVIRONMENT: ${{ runner.environment }}
+      run: python3 scripts/verify-host-bootstrap.py
+  gate:
+    if: ${{ always() }}
+    needs:
+    - commits
+    - runtime
+    - acceptance
+    - bootstrap
+    - security
+    runs-on: ubuntu-24.04
+    permissions: {}
+    steps:
+    - env:
+        RESULTS: ${{ toJSON(needs) }}
+        BOOTSTRAP_REQUIRED: ${{ needs.commits.outputs.bootstrap }}
+      run: |
+        python3 - <<'PY'
+        import json, os, sys
+        results = json.loads(os.environ["RESULTS"])
+        bad = {}
+        for key, value in results.items():
+            expected = "skipped" if key == "bootstrap" and os.environ["BOOTSTRAP_REQUIRED"] != "true" else "success"
+            if value["result"] != expected:
+                bad[key] = value["result"]
+        if bad:
+            print(bad)
+            sys.exit(1)
+        PY
+    timeout-minutes: 10
+  security:
+    needs:
+    - commits
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+    - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1
+      with:
+        node-version-file: .node-version
+        package-manager-cache: false
+    - run: bash scripts/check-security.sh
+    - run: python3 scripts/test-publish-image.py
+'on':
+  push:
+    branches:
+    - main
+  pull_request:
+    types:
+    - opened
+    - synchronize
+    - reopened
+    - edited
+  workflow_dispatch: null

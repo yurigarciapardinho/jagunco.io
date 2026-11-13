@@ -203,7 +203,14 @@ try {
             provoked = (await animal("moostafa")).health < guardianHealth;
         }
         assert.ok(provoked, "native attack provokes MOOSTAFA before the retreat");
-        await command("speed " + GUEST + " 2");
+        // A guardian can finish its attack and pause before reacquiring.
+        // Keep the visible lure in range until pursuit is actually observed.
+        await command("tp " + GUEST + " 2600 4400");
+        await until(async () => {
+            const first = await animal("moostafa"), second = await animal("moofie");
+            return first.y > 4250 || second.y > 4250;
+        }, "guardian follows the visible lure", 18000);
+        await command("speed " + GUEST + " 1");
         let horizontal = null;
         await guest.keyboard.down("s");
         try {
@@ -215,17 +222,24 @@ try {
                     if (key) await guest.keyboard.down(key);
                     horizontal = key;
                 }
-                return p.y > 5300;
+                return p.y > 5050;
             }, "lure steers through the opening", 15000);
         } finally {
             await guest.keyboard.up("s");
             if (horizontal) await guest.keyboard.up(horizontal);
         }
         await command("speed " + GUEST + " 1");
-        await delay(3000);
+        // Stop just outside the opening, still inside the acquisition radius.
+        // Require a real attempt at the southern edge, not an idle wander.
+        const reached = await until(async () => {
+            const first = await animal("moostafa"), second = await animal("moofie");
+            assert.ok(first.y <= 4793 && second.y <= 4783, "guardians stay confined during pursuit");
+            return (first.y > 4750 || second.y > 4750) && { moostafa: first, moofie: second };
+        }, "pursuing guardian reaches the southern edge", 18000);
+        await delay(1500);
         const moostafa = await animal("moostafa"), moofie = await animal("moofie");
         assert.ok(moostafa.y <= 4793 && moofie.y <= 4783);
-        assert.ok(moostafa.y > 4200 || moofie.y > 4200, "at least one guardian followed the lure");
+        assert.ok(reached.moostafa.y > 4750 || reached.moofie.y > 4750, "guardian attempted to follow outside");
         await screenshot(guest, "guardians");
         return { lure: await position(GUEST), moostafa, moofie };
     });

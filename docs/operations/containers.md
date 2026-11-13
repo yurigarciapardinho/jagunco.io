@@ -1,7 +1,7 @@
 # Instalação e operação em contêineres
 
-O jogo usa Node 26.13.0, MySQL 8.4.13 e Caddy 2.11.9. As bases de produção
-estão fixadas por digest. Node 24.22.2 é o runtime de compatibilidade.
+O jogo usa Node 26.13.1, MySQL 8.4.13 e Caddy 2.11.9. As bases de produção
+estão fixadas por digest. Node 24.22.3 é o runtime de compatibilidade.
 Builds e exportação de sprites devem acontecer na estação de trabalho ou
 no CI; a EC2 recebe imagens prontas.
 
@@ -33,7 +33,7 @@ A imagem final não contém o navegador nem ferramentas do build.
 
 ```sh
 sudo scripts/install.sh --directory /opt/jagunco \
-  --image jagunco-game:<revisao> --control \
+  --image jagunco-game:<revisao> \
   --domain jogo.exemplo.com --owner-email dono@exemplo.com
 ```
 
@@ -42,6 +42,10 @@ estáveis, provisiona usuários SQL distintos, prepara permissões e executa
 o migrador antes do app. O runtime recebe DML; o migrador recebe DDL apenas
 no esquema do jogo. A raiz do app fica somente leitura, com UID 1000,
 limites de memória/PIDs/CPU e rotação de logs.
+
+O hostname é obrigatório em uma nova instalação de produção. Para executar
+sem domínio próprio, use `--development --port 3300` e acesse pelo loopback.
+O jogo não exige a central privada; `--control` habilita seu conector opcional.
 
 Repita o mesmo comando para retomar uma instalação incompleta. Os segredos,
 contas, certificados e identidades dos volumes são preservados. Mudar a

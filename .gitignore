@@ -68,6 +68,7 @@ coverage/
 .ops/
 backups/
 .vendor/
+.local-game/
 
 __pycache__/
 *.pyc

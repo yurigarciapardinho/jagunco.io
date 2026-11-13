@@ -493,14 +493,20 @@ test("a player that dies during the grace period resumes into a normal new life"
     const b = await connect(stack, { did: a.did });
     assert.equal(game.players.length, 1, "no duplicate");
     assert.equal(game.players[0], player, "same player object");
+    // Exercise the normal spawn path on open grass, away from random map edges,
+    // the river and permanent terrain. Motion itself still crosses the real wire.
+    player.authoringSpawn = () => ({ x: 6000, y: 6000 });
     b.sendPacket("M", { name: "Unlucky", moofoll: false, skin: 0 });
     const [, cArgs] = await b.waitFor("C");
     assert.equal(cArgs[0], player.sid, "same sid");
     assert.equal(player.alive, true, "respawned through the normal spawn path");
     assert.equal(player.health, player.maxHealth, "fresh life health");
     assert.ok(!resourceValue(b, "points"), "the old life's points died with it");
+    assert.equal(player.x, 6000, "deterministic open spawn");
+    assert.equal(player.y, 6000, "deterministic open spawn");
+    const spawnedX = player.x;
     b.sendPacket("9", 0);
-    await waitUntil(() => player.xVel !== 0 || player.yVel !== 0, "new life accepts input");
+    await waitUntil(() => player.x > spawnedX + 1, "new life moves after real input");
 });
 
 test("account identity matches across devices; anti-cheat strikes survive the resume", async (t) => {

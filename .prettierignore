@@ -8,6 +8,10 @@ build/
 *.dist
 
 # Generated files
+# Vendored sources are patched by exact build anchors.
+client-official/source/
+client/public/
+art/source/silhouettes/
 *.tsbuildinfo
 coverage/
 

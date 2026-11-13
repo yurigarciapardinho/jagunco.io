@@ -28,7 +28,7 @@ A matriz de origem, adaptações, estado e evidências está em `PARITY.md`.
 
 ## Executar
 
-Produção: Node.js 26.13.0 LTS. A CI também verifica compatibilidade com Node 24.22.2 ou superior na linha 24.
+Produção: Node.js 26.13.1 LTS. A CI também verifica compatibilidade com Node 24.22.3 ou superior na linha 24.
 
 ```bash
 npm ci
@@ -66,16 +66,22 @@ A partida transitória continua em memória. Uma queda de WebSocket tem 30 segun
 ### Docker Compose
 
 O Compose inclui app sem privilégios, migrador separado, MySQL e Caddy.
-Construa a imagem fora da EC2 e use os instaladores:
+Para testar o jogo com MySQL no próprio computador, sem a central:
 
 ```bash
-docker build -t jagunco-game:<revisao> .
-sudo scripts/install.sh --directory /opt/jagunco \
-  --image jagunco-game:<revisao> --control
+docker build -t jagunco-game:local .
+scripts/install.sh --directory "$PWD/.local-game" \
+  --project jagunco-local --image jagunco-game:local \
+  --development --port 3300
 ```
 
-O instalador gera arquivos de segredo, provisiona usuários SQL distintos e
-prepara volumes. Consulte [operação em contêineres](docs/operations/containers.md)
+Abra `http://localhost:3300`. Docker Engine, Compose 2.24.4 ou posterior,
+Python 3 e acesso ao daemon Docker são necessários. O diretório de instalação
+contém segredos e não deve ser versionado. O instalador gera esses arquivos,
+provisiona usuários SQL distintos e prepara volumes. Para produção, informe
+seu próprio hostname com `--domain`; o instalador não escolhe um endereço do
+mantenedor. Acrescente `--control` somente para integrar a central privada.
+Consulte [operação em contêineres](docs/operations/containers.md)
 para instalar, adotar a EC2 existente, atualizar, fazer backup e restaurar.
 Somente Caddy publica portas em produção. O perfil de desenvolvimento
 publica o app em loopback. O conector privado é opcional e usa Unix socket.
@@ -196,3 +202,7 @@ Todas as alterações seguem a convenção de commits descrita em
 [CONTRIBUTING.md](CONTRIBUTING.md): títulos de até 50 caracteres e corpo
 com finalidade e validação. O histórico novo é verificado na integração
 contínua com npm run check:commits.
+
+## Distribuição de imagens
+
+Consulte [imagens, releases e verificação](docs/DISTRIBUICAO.md).

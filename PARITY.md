@@ -2,7 +2,7 @@
 
 Referência comportamental: `moomoo-clone` com cliente 1.9.4 (`index-993d072d.js`, API 1.31) e servidor local reconstruído. O servidor oficial privado do MooMoo não está nos anexos; esta matriz não afirma equivalência interna com ele.
 
-**Status: integração, testes e validação pública concluídos.** A coluna de evidência distingue teste de unidade, navegador, MySQL real e produção.
+Esta matriz descreve funcionalidades e preserva evidências da integração. Os resultados históricos não aprovam automaticamente outra revisão. Runtime, instalação e validação corrente estão no README, nos workflows e no manifesto de cada release.
 
 ## 1. Arquitetura adotada
 
@@ -123,7 +123,7 @@ Referência comportamental: `moomoo-clone` com cliente 1.9.4 (`index-993d072d.js
 - FRVR, anúncios, analytics, captcha externa e Discord bot: substituídos por serviços locais; não há conexão com servidores oficiais.
 - `objectManager.addProjectile` dormente/quebrado, `mapManager` vazio e `setData` do lado cliente: não usados como caminho de produção.
 
-## 6. Evidências executadas
+## 6. Evidências históricas da integração
 
 | Área | Resultado |
 | --- | --- |
@@ -151,13 +151,15 @@ Referência comportamental: `moomoo-clone` com cliente 1.9.4 (`index-993d072d.js
 - A lógica do servidor oficial privado do MooMoo não está disponível; bosses, alguns efeitos e regras do clone são reconstruções.
 - Não foi medido desempenho em GPU real. O dado de SwiftShader não é usado para prometer 60 fps.
 - A partida transitória não é integralmente persistida após reinício; persistência garantida cobre contas/social/moderação e a retomada por 30 s cobre queda de conexão.
-## 8. Release
+## 8. Registro histórico da infraestrutura
+
+Observação anterior à migração de runtime. Os itens abaixo não representam a imagem atual. Consulte os manifests das releases e a documentação operacional para instalar uma versão identificada.
 
 - URL pública: **https://54.221.34.83.sslip.io/**
 - TLS: Let’s Encrypt, renovação automática pelo Caddy; volumes `caddy-data` e `caddy-config`.
 - Infraestrutura: app Node 20, MySQL 8.4 e Caddy em Docker Compose na EC2; imagem anterior preservada como `jagunco-app:pre-seal-fix`.
 - Evidências de navegador: `verification-shots/public-https-player-a.png` e `verification-shots/public-https-player-b.png` (artefatos locais de QA, não incluídos no pacote público).
-- Commit e versão de preview: registrados na entrega final da sessão.
+- Este registro antigo não contém um identificador recuperável de commit/imagem; não deve ser usado como manifesto de release ou prova da revisão atual.
 
 ## Caverna do Jagunco
 

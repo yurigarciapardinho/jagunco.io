@@ -74,7 +74,7 @@ jobs:
         node-version-file: .node-version
         package-manager-cache: false
     - run: npm ci
-    - run: npx playwright install chromium
+    - run: npx playwright install --only-shell chromium
     - name: Construir o Dockerfile público
       run: docker build --build-arg VCS_REF="$GITHUB_SHA" -t jagunco-game:ci .
     - name: Recuperar o build para QA
@@ -90,7 +90,9 @@ jobs:
     - name: Verificar recompensas com MySQL
       env:
         MYSQL_IMAGE: mysql:8.4.13@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902
-      run: npm run verify:rewards:mysql
+      run: |
+        docker pull "$MYSQL_IMAGE"
+        npm run verify:rewards:mysql
     - name: Instalar sem central e recuperar
       run: python3 scripts/verify-installation.py --image jagunco-game:ci --directory "$RUNNER_TEMP/game-installation"
   bootstrap:

@@ -29,7 +29,7 @@ docker pull "$GAME_IMAGE"
 scripts/install.sh --directory "$PWD/.local-game" --image "$GAME_IMAGE" --development
 ```
 
-Para produção, use as instruções de `docs/operations/README.md` e
+Para produção, use as instruções de `docs/operations/containers.md` e
 informe seu hostname no instalador. A configuração local não exige
 domínio próprio. Instalar o jogo não exige instalar a central.
 

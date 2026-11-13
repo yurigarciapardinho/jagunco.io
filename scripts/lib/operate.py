@@ -93,7 +93,7 @@ def write(path, value, uid=1000, gid=1000):
                     str(path.parent) + ":/secrets",
                     "--entrypoint",
                     "chown",
-                    "node:26.13.0-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68",
+                    "node:26.13.1-bookworm-slim@sha256:5df79989ed685e09f0a98019db4cebfb22fb9df1a53c0161664a011f7ff6b0f1",
                     str(uid) + ":" + str(os.getgid()),
                     "/secrets/" + path.name,
                 ]
@@ -213,7 +213,7 @@ def install(a, directory):
         old = settings(directory)
         if old["PROJECT"] != a.project:
             raise RuntimeError("Project mismatch")
-        if a.image and a.image != old["GAME_IMAGE"]:
+        if a.image and inspect_image(a.image)["Id"] != inspect_image(old["GAME_IMAGE"])["Id"]:
             raise RuntimeError("Use ops.sh deploy to change an installed image")
         if ROOT.resolve() != directory.resolve():
             for name in [
@@ -238,11 +238,16 @@ def install(a, directory):
         return
     if not a.image:
         raise RuntimeError("--image required")
+    domain = a.domain or ("localhost" if a.development else "")
+    if a.domain and not re.fullmatch(r"[a-zA-Z0-9.-]+", a.domain):
+        raise RuntimeError("Invalid domain")
+    if not (directory / "Caddyfile").exists() and not domain:
+        raise RuntimeError("Supply --domain for production or --development for loopback")
     image = inspect_image(a.image)
     values = {
         "PROJECT": a.project,
         "ENVIRONMENT": "development" if a.development else "production",
-        "GAME_IMAGE": a.image,
+        "GAME_IMAGE": image["Id"],
         "MYSQL_IMAGE": "mysql:8.4.13@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902",
         "CADDY_IMAGE": "caddy:2.11.9-alpine@sha256:0bbb055bda6793c999bde78b1b5ce3e89f829fb031af2cf50056ea1246559fee",
         "OWNER_EMAIL": a.owner_email or "",
@@ -368,9 +373,6 @@ def install(a, directory):
         get_secret(app_info, "APP_SECRET") if app_info else secrets.token_hex(32),
     )
     write(sec / "control_secret", secrets.token_hex(32))
-    domain = a.domain
-    if not re.fullmatch(r"[a-zA-Z0-9.-]+", domain):
-        raise RuntimeError("Invalid domain")
     if ROOT.resolve() != directory.resolve():
         (directory / "scripts/lib").mkdir(parents=True, exist_ok=True)
         for script in ["install.sh", "ops.sh", "lib/operate.py"]:
@@ -408,7 +410,8 @@ def install(a, directory):
     previous = app_info["Image"] if app_info else None
     release = {
         "at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
-        "image": a.image,
+        "image": image["Id"],
+        "requestedImage": a.image,
         "imageId": image["Id"],
         "previousImage": previous,
         "volumes": {k: v for k, v in values.items() if k.endswith("_VOLUME")},
@@ -425,7 +428,13 @@ def install(a, directory):
 
 
 def inspect_image(image):
-    return json.loads(run(["docker", "image", "inspect", image], capture=True))[0]
+    result = subprocess.run(["docker", "image", "inspect", image], capture_output=True, text=True)
+    if result.returncode:
+        if not re.fullmatch(r"[a-z0-9][a-z0-9._:/-]+@sha256:[0-9a-f]{64}", image):
+            raise RuntimeError("Image unavailable; supply a registry digest or load the verified archive first")
+        run(["docker", "pull", image])
+        result = subprocess.run(["docker", "image", "inspect", image], capture_output=True, text=True, check=True)
+    return json.loads(result.stdout)[0]
 
 
 def backup(directory, a):
@@ -557,7 +566,7 @@ def main():
     parser.add_argument("--adopt", action="store_true")
     parser.add_argument("--control", action="store_true")
     parser.add_argument("--development", action="store_true")
-    parser.add_argument("--domain", default="54.221.34.83.sslip.io")
+    parser.add_argument("--domain")
     parser.add_argument("--owner-email")
     parser.add_argument("--control-dir")
     parser.add_argument("--file")
@@ -591,8 +600,8 @@ def main():
             if not image:
                 raise RuntimeError("No image selected")
             info = inspect_image(image)
-            old = env["GAME_IMAGE"]
-            env["GAME_IMAGE"] = image
+            old = inspect_image(env["GAME_IMAGE"])["Id"]
+            env["GAME_IMAGE"] = info["Id"]
             save_settings(directory, env)
             try:
                 compose(directory, "run", "--rm", "--no-deps", "migrate")
@@ -606,7 +615,8 @@ def main():
             (directory / ".ops/release.json").write_text(
                 json.dumps(
                     {
-                        "image": image,
+                        "image": info["Id"],
+                        "requestedImage": image,
                         "imageId": info["Id"],
                         "previousImage": old,
                         "at": datetime.datetime.now(datetime.timezone.utc).isoformat(),

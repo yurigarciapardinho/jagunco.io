@@ -1,10 +1,13 @@
 ARG NODE_IMAGE=node:26.13.0-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68
-FROM ${NODE_IMAGE} AS build
+ARG PLAYWRIGHT_IMAGE=mcr.microsoft.com/playwright:v1.64.1-noble@sha256:2f05f8a734509a7b3f26a912639488ee08f58a7b292d14d62271bcff9038768f
+FROM ${NODE_IMAGE} AS node-toolchain
+FROM ${PLAYWRIGHT_IMAGE} AS build
+# Browser and OS libraries are prepared together; no APT during app builds.
+COPY --from=node-toolchain /usr/local/ /usr/local/
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN npx playwright install --with-deps chromium
 COPY . .
 RUN npm run build && npm run export:editor
 
@@ -14,6 +17,11 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 FROM ${NODE_IMAGE} AS runtime
+ARG VCS_REF=unknown
+ARG VERSION=development
+LABEL org.opencontainers.image.source="https://github.com/yurigarciapardinho/jagunco.io" \
+      org.opencontainers.image.revision="${VCS_REF}" \
+      org.opencontainers.image.version="${VERSION}"
 WORKDIR /app
 ENV NODE_ENV=production DATA_DIR=/app/server/data PROTOCOL_OUTPUT_DIR=/app/server/data/protocol
 COPY --from=dependencies --chown=node:node /app/node_modules ./node_modules

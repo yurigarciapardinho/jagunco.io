@@ -7,6 +7,7 @@ import express from "express";
 import contract from "../../../shared/control-contract.js";
 import { hats, accessories } from "../moomoo/modules/store.js";
 import { AI_TYPES } from "../moomoo/modules/aiManager.js";
+import { MAX_XP_GRANT, progression, validateExperience, grantExperience } from "./progression.js";
 
 export const hash = value =>
   createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -241,6 +242,7 @@ export class ControlService {
         "segment",
         "power",
         "give",
+        "xp",
         "teleport",
         "spawn",
         "kick",
@@ -249,6 +251,7 @@ export class ControlService {
         "event.upsert",
         "event.cancel",
       ],
+      limits: { xpGrant: MAX_XP_GRANT },
       queue: {
         fenced: !!this.queue?.fenced,
         unresolved: this.unresolved.size,
@@ -298,6 +301,7 @@ export class ControlService {
         x: p.x,
         y: p.y,
         powers: p.powers,
+        progression: progression(p),
         revision:
           this.state.get("life:" + g.instanceId + ":" + p.lifeId)?.revision ||
           0,
@@ -453,6 +457,7 @@ export class ControlService {
           b.amount > 100000)
       )
         throw error("grant_invalid");
+      if (c.type === "xp") validateExperience(p, b.amount);
       if (
         c.type === "teleport" &&
         (!Number.isFinite(b.x) ||
@@ -618,7 +623,8 @@ export class ControlService {
       }
       let status = "applied";
       try {
-        this.applyEffect(c);
+        const effect = this.applyEffect(c);
+        if (effect) result.effect = effect;
       } catch (e) {
         status = e.status === 409 ? "expired" : "uncertain";
         result.error = e.status ? e.message : "effect_failed";
@@ -706,6 +712,7 @@ export class ControlService {
     const { g, p } = this.target(c),
       b = c.payload;
     p.adminSession = true;
+    let effect;
     if (c.type === "power") {
       p.powers[b.key] = b.value;
       if (b.key === "godlike") p.powers.god = p.powers.aura = b.value;
@@ -722,6 +729,7 @@ export class ControlService {
       p.y = b.y;
       p.xVel = p.yVel = 0;
     }
+    if (c.type === "xp") effect = { progression: grantExperience(p, b.amount) };
     if (c.type === "spawn")
       g.ai_manager.spawn(p.x + p.scale + 200, p.y, 0, b.index, {
         despawnOnDeath: true,
@@ -738,6 +746,7 @@ export class ControlService {
       type: c.type,
       operationId: c.operationId,
     });
+    return effect;
   }
   async start(games) {
     this.games = games;

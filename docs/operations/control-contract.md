@@ -9,7 +9,7 @@ recibos, auditoria e telemetria paginada. Catálogo e renderer possuem hashes;
 a central recusa comandos quando seus artefatos não correspondem ao jogo.
 
 Comandos: cargo, moderação de conta, aparência, segmentação analítica, poder,
-recurso, teleporte, animal temporário, encerramento de sessão, publicação de
+recurso, XP, teleporte, animal temporário, encerramento de sessão, publicação de
 mapa/regras e agenda de eventos. Não há texto de console, shell, SQL livre,
 Docker ou código executável fornecido pelo chamador.
 
@@ -22,6 +22,15 @@ instanceId, sessionId e lifeId. O prazo máximo de solicitação é dois minutos
 Um ID repetido com corpo diferente falha. Um ID repetido com o mesmo corpo
 consulta o recibo; não paga outro recurso. A consulta antecede a validação
 de prazo e vida, permitindo observar uma operação antiga sem reaplicá-la.
+
+O comando `xp` recebe `{ "amount": 1250 }` e exige um inteiro entre 1 e
+1.000.000. Usa o mesmo alvo de vida, motivo, revisão e recibo dos demais
+efeitos transitórios. Divide o crédito entre os limiares nativos de idade,
+mantendo o restante e os pontos de evolução, até a idade máxima. Não concede
+recursos ou XP de arma. O resultado registra quantidade solicitada, aplicada
+e progressão antes/depois. `status.capabilities` anuncia `xp`,
+`status.limits.xpGrant` informa o limite e `players[].progression` apresenta
+idade, XP, limiar e evoluções pendentes. Uma nova vida reinicia esse progresso.
 
 Persistência de domínio e recibo compartilham transação. A fila de snapshots
 é serializada com o comando; a projeção em RAM acontece antes de liberar a

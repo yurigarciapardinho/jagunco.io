@@ -8,6 +8,7 @@ import pathlib
 import re
 import subprocess
 import urllib.request
+import urllib.error
 
 
 def run(args, **kwargs):
@@ -92,6 +93,21 @@ def require_gate(repository, revision, token):
         raise RuntimeError("The exact source revision needs a successful CI gate")
 
 
+def package_visibility(owner, component, token):
+    request = urllib.request.Request(
+        "https://api.github.com/users/" + owner + "/packages/container/jagunco-" + component,
+        headers={"Authorization": "Bearer " + token,
+                 "Accept": "application/vnd.github+json", "User-Agent": "jagunco-release"},
+    )
+    try:
+        with urllib.request.build_opener(NoRedirect).open(request, timeout=30) as response:
+            return json.load(response)["visibility"]
+    except urllib.error.HTTPError as error:
+        if error.code == 404:
+            return None
+        raise
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--component", choices=["game", "control", "preview"])
@@ -134,6 +150,9 @@ def main():
         raise RuntimeError("Game source must be public; control and preview source must remain private")
     owner = repository.split("/")[0].lower()
     image = "ghcr.io/" + owner + "/jagunco-" + args.component
+    visibility = package_visibility(owner, args.component, token)
+    if args.component != "game" and visibility not in (None, "private"):
+        raise RuntimeError("Refusing to publish private code into a non-private package")
     tag = "v" + version + "-rc." + str(args.candidate)
     destination = pathlib.Path(os.environ["RUNNER_TEMP"]) / "jagunco-release"
     destination.mkdir(mode=0o700, exist_ok=True)
@@ -167,12 +186,16 @@ def main():
             if not json.loads(value):
                 raise RuntimeError("The image is missing " + name)
             (destination / (args.component + "-" + name + ".json")).write_text(value + "\n")
+    visibility = package_visibility(owner, args.component, token)
+    if args.component != "game" and visibility != "private":
+        raise RuntimeError("Private package visibility could not be verified")
     manifest = {
         "schemaVersion": 1, "component": args.component, "version": version, "candidate": tag,
         "repository": repository, "revision": revision,
         "tree": output(["git", "rev-parse", "HEAD^{tree}"]),
         "image": reference, "digest": digest, "platform": "linux/amd64",
         "intendedVisibility": "public" if args.component == "game" and not source["private"] else "private",
+        "observedVisibility": visibility,
         "workflow": "https://github.com/" + repository + "/actions/runs/" + os.environ["GITHUB_RUN_ID"],
         "buildx": output(["docker", "buildx", "version"]),
     }

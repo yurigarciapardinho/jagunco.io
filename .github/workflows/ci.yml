@@ -152,6 +152,7 @@ jobs:
         node-version-file: .node-version
         package-manager-cache: false
     - run: bash scripts/check-security.sh
+    - run: python3 scripts/test-publish-image.py
 'on':
   push:
     branches:

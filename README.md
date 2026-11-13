@@ -202,3 +202,7 @@ Todas as alterações seguem a convenção de commits descrita em
 [CONTRIBUTING.md](CONTRIBUTING.md): títulos de até 50 caracteres e corpo
 com finalidade e validação. O histórico novo é verificado na integração
 contínua com npm run check:commits.
+
+## Distribuição de imagens
+
+Consulte [imagens, releases e verificação](docs/DISTRIBUICAO.md).

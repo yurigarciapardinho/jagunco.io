@@ -2,6 +2,7 @@
 """Publish a reviewed candidate to GHCR from the repository that owns it."""
 import argparse
 import contextlib
+import hashlib
 import json
 import os
 import pathlib
@@ -67,6 +68,15 @@ def verify_manifest(path, token, signed):
                                   repository + "/.github/workflows/release.yml", "--format", "json"])
             evidence["signedProvenanceVerified"] = True
             evidence["attestation"] = json.loads(attestation)
+        assets_path = "/app/game-assets/renderer-manifest.json" if manifest["component"] == "control" else "/app/dist/control-assets/renderer-manifest.json"
+        assets = output(["docker", "run", "--rm", "--network", "none", "--read-only",
+                         "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+                         "--entrypoint", "node", reference, "-e",
+                         "process.stdout.write(require('node:fs').readFileSync(process.argv[1]))", assets_path])
+        manifest["assets"] = {"sha256": hashlib.sha256((assets + "\n").encode()).hexdigest(),
+                              "manifest": json.loads(assets)}
+        manifest["node"] = runtime
+        pathlib.Path(path).write_text(json.dumps(manifest, indent=2) + "\n")
         target = pathlib.Path(path).with_name(manifest["component"] + "-verification.json")
         target.write_text(json.dumps(evidence, indent=2) + "\n")
 
@@ -199,6 +209,12 @@ def main():
         "workflow": "https://github.com/" + repository + "/actions/runs/" + os.environ["GITHUB_RUN_ID"],
         "buildx": output(["docker", "buildx", "version"]),
     }
+    files = ["server/src/persistence/schema.js", "server/src/persistence/migrations.js", "server/src/protocol/constants.js"] if args.component == "game" else ["db/schema.mjs", "db/migrate.mjs"]
+    manifest["sourceContracts"] = {name: hashlib.sha256((root / name).read_bytes()).hexdigest() for name in files}
+    dockerfile = root / ("Dockerfile.preview" if args.component == "preview" else "Dockerfile")
+    manifest["baseImages"] = sorted(set(re.findall(r"[A-Za-z0-9._:/-]+@sha256:[0-9a-f]{64}", dockerfile.read_text())))
+    manifest["controlApiVersion"] = 1
+    manifest["previousCompatibleRelease"] = None  # First versioned distribution; do not invent a prior release.
     if args.component != "game":
         manifest["game"] = json.loads((root / "contracts/game.json").read_text())
     (destination / (args.component + "-manifest.json")).write_text(json.dumps(manifest, indent=2) + "\n")

@@ -1,7 +1,7 @@
 {
   "name": "jagunco-io",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.2",
   "scripts": {
     "build": "node scripts/build-clone.mjs",
     "build:official": "node tools/build-official-client.mjs",
@@ -38,6 +38,6 @@
     "minimatch": "^11.0.1"
   },
   "engines": {
-    "node": ">=24.22.2 <27"
+    "node": ">=24.22.3 <25 || >=26.13.1 <27"
   }
 }

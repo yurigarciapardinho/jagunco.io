@@ -114,6 +114,25 @@ try {
       /operation_reused/
     );
   });
+  await test("XP grant is audited once and cannot replay after a lost response", async () => {
+    const c = envelope("xp", { amount: 1250 }, undefined, lifeRevision());
+    const first = await service.execute(c);
+    const after = { age: p.age, xp: p.XP, upgrades: p.upgradePoints };
+    const duplicate = await service.execute(c);
+    assert.equal(first.status, "applied");
+    assert.equal(first.effect.progression.granted, 1250);
+    assert.equal(duplicate.duplicate, true);
+    assert.deepEqual({ age: p.age, xp: p.XP, upgrades: p.upgradePoints }, after);
+    const [[row]] = await service.pool.query(
+      "SELECT type,reason,result_json FROM control_operations WHERE operation_id=?", [c.operationId]
+    );
+    const receipt = typeof row.result_json === "string" ? JSON.parse(row.result_json) : row.result_json;
+    assert.equal(row.type, "xp");
+    assert.equal(row.reason, c.reason);
+    assert.deepEqual(receipt.effect.progression, first.effect.progression);
+    await assert.rejects(service.execute(envelope("xp", { amount: -1 }, undefined, lifeRevision())), /xp_invalid/);
+    assert.deepEqual({ age: p.age, xp: p.XP, upgrades: p.upgradePoints }, after);
+  });
   await test("stale revisions and previous lives cannot mutate a new life", async () => {
     await assert.rejects(
       service.execute(envelope("give", { resource: "wood", amount: 1 })),

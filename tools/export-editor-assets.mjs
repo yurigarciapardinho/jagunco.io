@@ -196,10 +196,13 @@ try {
       2
     ) + "\n"
   );
-  const notice = fs.readFileSync(path.join(ROOT, "dist/legal/LICENSE"));
   fs.mkdirSync(path.join(out, "legal"), { recursive: true });
-  fs.writeFileSync(path.join(out, "legal/LICENSE"), notice);
-  const notices = [{ file: "legal/LICENSE", sha256: sha(notice) }];
+  const notices = fs.readdirSync(path.join(ROOT, "dist/legal")).sort().map((name) => {
+    if (!/^[a-zA-Z0-9_.-]+$/.test(name)) throw new Error("Invalid notice filename");
+    const notice = fs.readFileSync(path.join(ROOT, "dist/legal", name));
+    fs.writeFileSync(path.join(out, "legal", name), notice);
+    return { file: "legal/" + name, sha256: sha(notice) };
+  });
   const manifest = {
     schemaVersion: 1,
     notices,

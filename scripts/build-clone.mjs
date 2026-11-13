@@ -86,6 +86,11 @@ fs.cpSync(path.join(ROOT, "public"), PUBLIC_OUT, { recursive: true, dereference:
 // Preserve the project's existing distribution notice in the runtime image.
 fs.mkdirSync(path.join(DIST, "legal"), { recursive: true });
 fs.copyFileSync(path.join(ROOT, "LICENSE"), path.join(DIST, "legal/LICENSE"));
+for (const name of ["CREDITS.md", "MOOMOO_CLONE_LICENSE.md", "THIRD_PARTY_NOTICES.md"]) {
+    fs.copyFileSync(path.join(ROOT, name), path.join(DIST, "legal", name));
+}
+fs.copyFileSync(path.join(ROOT, "legal/Howler-MIT.txt"), path.join(DIST, "legal/Howler-MIT.txt"));
+fs.copyFileSync(path.join(ROOT, "legal/nipplejs-MIT.txt"), path.join(DIST, "legal/nipplejs-MIT.txt"));
 
 // ---------------------------------------------------------------- sanity check
 for (const required of ["boot.js", "official/index.html", "official/assets", "official/assets/index-d71d2980.js", "public/img", "public/manifest.json"]) {

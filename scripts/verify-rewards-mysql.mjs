@@ -243,9 +243,10 @@ async function orchestrate() {
     const envFile = path.join(scratch, "mysql.env");
     fs.writeFileSync(envFile, "MYSQL_DATABASE=jagunco_rewardqa\nMYSQL_USER=rewardqa\nMYSQL_PASSWORD=" + password + "\nMYSQL_ROOT_PASSWORD=" + rootPassword + "\n", { mode: 0o600 });
     try {
-        await command("docker", ["image", "inspect", "mysql:8.4", "--format", "{{.Id}}"]);
+        const mysqlImage = process.env.MYSQL_IMAGE || "mysql:8.4.13@sha256:a81d043930e51745522bd5c430961cf8286f0a23f0a9a2a6e0108f7ea71b0902";
+        await command("docker", ["image", "inspect", mysqlImage, "--format", "{{.Id}}"]);
         await command("docker", ["run", "--detach", "--name", name, "--label", "jagunco.qa=rewards",
-            "--publish", "127.0.0.1::3306", "--env-file", envFile, "mysql:8.4"], { timeout: 30000 });
+            "--publish", "127.0.0.1::3306", "--env-file", envFile, mysqlImage], { timeout: 30000 });
         created = true;
         const { stdout } = await command("docker", ["port", name, "3306/tcp"]);
         let port = Number(/^127\.0\.0\.1:(\d+)\s*$/.exec(stdout)[1]);

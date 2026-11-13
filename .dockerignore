@@ -18,3 +18,4 @@ verification-shots
 backups
 *.sql
 research
+.local-game

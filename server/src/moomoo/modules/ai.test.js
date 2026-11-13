@@ -178,6 +178,8 @@ test("noTrap: Quack walks over a pit trap; Yeti must also be untrappable (briefi
 test("Yeti breaks constructions blocking its charge (dmg*5 melee path, briefing rule)", (t) => {
     const game = setup(t);
     const owner = addPlayer(game, { name: "owner" });
+    // The wall's owner must not randomly become a nearer aggro target.
+    place(owner, 10000, 5000);
     const wallObj = placeObject(game, itemByName("wood wall"), 8000, 3000, 0, owner);
     const yeti = spawnAnimal(game, YETI, 7600, 3000);
     const bait = addPlayer(game, { name: "bait" });

@@ -89,6 +89,16 @@ def main():
         assert values["GAME_IMAGE"].startswith("sha256:")
         assert request(base, "/ready")[0] == 200
         results.append({"name": "nonroot readonly runtime and immutable image selection", "pass": True})
+        # Exercise root operations without relying on the image's default socket.
+        operator("stop")
+        compose_file = directory / "compose.yaml"
+        compose_text = compose_file.read_text()
+        assert compose_text.count("  db:\n") == 1
+        compose_file.write_text(compose_text.replace("  db:\n", "  db:\n    command: [mysqld, --socket=/var/lib/mysql/jagunco-qa.sock]\n", 1))
+        op.compose(directory, "up", "-d", "--no-deps", "--force-recreate", "db")
+        op.ready(project, "db")
+        assert op.root_sql(project, "SELECT @@socket;").strip() == "/var/lib/mysql/jagunco-qa.sock"
+        results.append({"name": "root provisioning uses TCP with a nondefault MySQL socket", "pass": True})
         before = fingerprint()
         check("repeated install preserves secrets and volume identities", install)
         assert fingerprint() == before

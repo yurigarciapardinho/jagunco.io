@@ -214,7 +214,7 @@ def main():
     dockerfile = root / ("Dockerfile.preview" if args.component == "preview" else "Dockerfile")
     manifest["baseImages"] = sorted(set(re.findall(r"[A-Za-z0-9._:/-]+@sha256:[0-9a-f]{64}", dockerfile.read_text())))
     manifest["controlApiVersion"] = 1
-    manifest["previousCompatibleRelease"] = None  # First versioned distribution; do not invent a prior release.
+    manifest["previousCompatibleRelease"] = None  # Compatibility requires review; do not infer it from a version number.
     if args.component != "game":
         manifest["game"] = json.loads((root / "contracts/game.json").read_text())
     (destination / (args.component + "-manifest.json")).write_text(json.dumps(manifest, indent=2) + "\n")

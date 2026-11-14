@@ -152,7 +152,7 @@ trap 'rm -f "$f"' EXIT
 if [ -n "${MYSQL_ROOT_PASSWORD_FILE:-}" ]; then p=$(cat "$MYSQL_ROOT_PASSWORD_FILE"); else p=$MYSQL_ROOT_PASSWORD; fi
 printf '[client]\\nuser=root\\npassword=%s\\n' "$p" > "$f"
 unset p
-mysql --defaults-extra-file="$f" --batch --skip-column-names"""
+mysql --defaults-extra-file="$f" --protocol=TCP --host=127.0.0.1 --batch --skip-column-names"""
     # mysql receives only the SQL payload on stdin.
     return run(["docker", "exec", "-i", db, "sh", "-c", shell], capture=True, data=sql)
 
@@ -454,7 +454,7 @@ def backup(directory, a):
             ]
         )
     try:
-        shell = """set -eu; umask 077; f=$(mktemp); trap 'rm -f "$f"' EXIT; if [ -n "${MYSQL_ROOT_PASSWORD_FILE:-}" ]; then p=$(cat "$MYSQL_ROOT_PASSWORD_FILE"); else p=$MYSQL_ROOT_PASSWORD; fi; printf '[client]\\nuser=root\\npassword=%s\\n' "$p" > "$f"; unset p; mysqldump --defaults-extra-file="$f" --single-transaction --quick --skip-lock-tables --no-tablespaces --set-gtid-purged=OFF --databases jagunco"""
+        shell = """set -eu; umask 077; f=$(mktemp); trap 'rm -f "$f"' EXIT; if [ -n "${MYSQL_ROOT_PASSWORD_FILE:-}" ]; then p=$(cat "$MYSQL_ROOT_PASSWORD_FILE"); else p=$MYSQL_ROOT_PASSWORD; fi; printf '[client]\\nuser=root\\npassword=%s\\n' "$p" > "$f"; unset p; mysqldump --defaults-extra-file="$f" --protocol=TCP --host=127.0.0.1 --single-transaction --quick --skip-lock-tables --no-tablespaces --set-gtid-purged=OFF --databases jagunco"""
         if a.control_dir:
             shell += " jagunco_control"
         db = container(env["PROJECT"], "db")

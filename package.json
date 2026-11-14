@@ -1,7 +1,7 @@
 {
   "name": "jagunco-io",
   "private": true,
-  "version": "1.1.0",
+  "version": "1.1.1",
   "scripts": {
     "build": "node scripts/build-clone.mjs",
     "build:official": "node tools/build-official-client.mjs",
